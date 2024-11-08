@@ -1,5 +1,9 @@
 #include "NoteOutput.h"
 
+/* Usage Guideline
+ * When a note is to be played, call setChInterval to output the squarewave of the note's frequency.
+ */
+
 struct TimerStruct {
     unsigned int IR;
     unsigned int TCR;
@@ -17,7 +21,7 @@ struct TimerStruct {
 
 /* Contains the time intervals for each Match Register
  * This is used to update the Match Register during the interrupt handler for the next interrupt.
- * These need to be (Period/2) / PCLK
+ * The values for these intervals are calculated to be (Period/2) / PCLK
  */
 int ChInterval[4];
 
@@ -26,16 +30,22 @@ void initNoteSystem(void){
     T[0].TCR |= 1;          //Enable Timer 0 counter
 }
 
-//
-void setChInterval(int channel, int interval){
-    ChInterval[channel] = interval;
-    T[0].MCR |= (1 << channel);
+// Enables interrupt generation from the specified match register with the specified interval.
+void setChInterval(int MR, int interval){
+    ChInterval[MR] = interval;
+    T[0].MCR |= (1 << MR);
     T[0].MR[0] = T[0].TC + interval;
 }
 
-void disableCh(int channel){
-    T[0].MCR &= ~(1u << channel);
+/* Disables interrupt generation from the specified Match Register.
+ * Also clears the relevant interrupt flag.
+ */
+void disableCh(int MR){
+    T[0].MCR &= ~(1u << MR);
+    T[0].IR = (1 << MR);
 }
+
+//These are for implementing the pin toggle for the square wave. These are to be implemented elsewhere.
 
 __attribute__ ((weak)) void togglePin0(void){
 

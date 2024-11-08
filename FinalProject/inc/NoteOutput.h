@@ -6,5 +6,4 @@ void initNoteSystem(void);
 void setChInterval(int channel, int interval);
 void disableCh(int channel);
 
-
 #endif
