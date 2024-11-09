@@ -1,0 +1,10 @@
+../src/NoteOutput.c:18:6:initNoteSystem	4	static
+../src/NoteOutput.c:38:13:enableMCRInterrupt	16	static
+../src/NoteOutput.c:58:6:enableCh	16	static
+../src/NoteOutput.c:64:6:setChInterval	16	static
+../src/NoteOutput.c:71:6:disableCh	16	static
+../src/NoteOutput.c:92:6:togglePin0	4	static
+../src/NoteOutput.c:99:6:togglePin1	4	static
+../src/NoteOutput.c:106:6:togglePin2	4	static
+../src/NoteOutput.c:113:6:togglePin3	4	static
+../src/NoteOutput.c:121:6:TIMER0_IRQHandler	8	static
