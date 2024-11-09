@@ -40,7 +40,7 @@ void initNoteSystem(void){
 unsigned int ChInterval[4];
 
 // Enables interrupt generation from the specified match register
-void enableCh(unsigned int MR){
+void enableCh(int MR){
     T0.MCR |= (1 << MR);
     T0.MR[0] = T0.TC + ChInterval[MR];
 }
