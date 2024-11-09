@@ -73,8 +73,23 @@ void setChInterval(int MR, unsigned int interval){
  * Also clears the relevant interrupt flag.
  */
 void disableCh(int MR){
-    T0.MCR &= ~(1u << MR);
     T0.IR = (1 << MR);
+    switch (MR) {
+    case 0:
+        T0.MCR |= 1;
+        return;
+    case 1:
+        T0.MCR |= (1 << 3);
+        return;
+    case 2:
+        T0.MCR |= (1 << 6);
+        return;
+    case 3:
+        T0.MCR |= (1 << 9);
+    	return;
+    default:
+    	return;
+    }
 }
 
 //These are for implementing the pin toggle for the square wave. These are to be implemented elsewhere.
