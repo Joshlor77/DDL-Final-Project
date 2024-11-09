@@ -15,20 +15,14 @@ Discarded input sections
  .bss           0x00000000        0x0 ./src/NoteOutput.o
  .text.initNoteSystem
                 0x00000000       0x30 ./src/NoteOutput.o
+ .text.enableMCRInterrupt
+                0x00000000       0x78 ./src/NoteOutput.o
  .text.enableCh
-                0x00000000       0x44 ./src/NoteOutput.o
+                0x00000000       0x38 ./src/NoteOutput.o
  .text.setChInterval
                 0x00000000       0x24 ./src/NoteOutput.o
  .text.disableCh
                 0x00000000       0x36 ./src/NoteOutput.o
- .text.togglePin0
-                0x00000000        0xc ./src/NoteOutput.o
- .text.togglePin1
-                0x00000000        0xc ./src/NoteOutput.o
- .text.togglePin2
-                0x00000000        0xc ./src/NoteOutput.o
- .text.togglePin3
-                0x00000000        0xc ./src/NoteOutput.o
  .debug_macro   0x00000000      0xa72 ./src/NoteOutput.o
  .group         0x00000000        0xc ./src/cr_startup_lpc175x_6x.o
  .text          0x00000000        0x0 ./src/cr_startup_lpc175x_6x.o
@@ -159,20 +153,20 @@ END GROUP
                 0x00000300                PROVIDE (__CRP_WORD_END__ = .)
                 0x00000001                ASSERT (! ((__CRP_WORD_START__ == __CRP_WORD_END__)), Linker CRP Enabled, but no CRP_WORD provided within application)
  *(.text*)
+ .text.main     0x00000300        0x6 ./src/FinalProject.o
+                0x00000300                main
  .text.togglePin0
-                0x00000300        0xc ./src/FinalProject.o
-                0x00000300                togglePin0
+                0x00000306        0xc ./src/NoteOutput.o
+                0x00000306                togglePin0
  .text.togglePin1
-                0x0000030c        0xc ./src/FinalProject.o
-                0x0000030c                togglePin1
+                0x00000312        0xc ./src/NoteOutput.o
+                0x00000312                togglePin1
  .text.togglePin2
-                0x00000318        0xc ./src/FinalProject.o
-                0x00000318                togglePin2
+                0x0000031e        0xc ./src/NoteOutput.o
+                0x0000031e                togglePin2
  .text.togglePin3
-                0x00000324        0xc ./src/FinalProject.o
-                0x00000324                togglePin3
- .text.main     0x00000330        0x6 ./src/FinalProject.o
-                0x00000330                main
+                0x0000032a        0xc ./src/NoteOutput.o
+                0x0000032a                togglePin3
  *fill*         0x00000336        0x2 ff
  .text.TIMER0_IRQHandler
                 0x00000338       0xbc ./src/NoteOutput.o
@@ -306,54 +300,54 @@ END GROUP
 OUTPUT(FinalProject.axf elf32-littlearm)
 LOAD linker stubs
 
-.debug_info     0x00000000      0x539
- .debug_info    0x00000000       0x8f ./src/FinalProject.o
- .debug_info    0x0000008f      0x1eb ./src/NoteOutput.o
- .debug_info    0x0000027a      0x27f ./src/cr_startup_lpc175x_6x.o
- .debug_info    0x000004f9       0x40 ./src/crp.o
+.debug_info     0x00000000      0x516
+ .debug_info    0x00000000       0x47 ./src/FinalProject.o
+ .debug_info    0x00000047      0x210 ./src/NoteOutput.o
+ .debug_info    0x00000257      0x27f ./src/cr_startup_lpc175x_6x.o
+ .debug_info    0x000004d6       0x40 ./src/crp.o
 
-.debug_abbrev   0x00000000      0x2a5
- .debug_abbrev  0x00000000       0x54 ./src/FinalProject.o
- .debug_abbrev  0x00000054       0xf7 ./src/NoteOutput.o
- .debug_abbrev  0x0000014b      0x122 ./src/cr_startup_lpc175x_6x.o
- .debug_abbrev  0x0000026d       0x38 ./src/crp.o
+.debug_abbrev   0x00000000      0x2c3
+ .debug_abbrev  0x00000000       0x3c ./src/FinalProject.o
+ .debug_abbrev  0x0000003c      0x12d ./src/NoteOutput.o
+ .debug_abbrev  0x00000169      0x122 ./src/cr_startup_lpc175x_6x.o
+ .debug_abbrev  0x0000028b       0x38 ./src/crp.o
 
-.debug_aranges  0x00000000      0x138
+.debug_aranges  0x00000000      0x120
  .debug_aranges
-                0x00000000       0x40 ./src/FinalProject.o
+                0x00000000       0x20 ./src/FinalProject.o
  .debug_aranges
-                0x00000040       0x60 ./src/NoteOutput.o
+                0x00000020       0x68 ./src/NoteOutput.o
  .debug_aranges
-                0x000000a0       0x80 ./src/cr_startup_lpc175x_6x.o
+                0x00000088       0x80 ./src/cr_startup_lpc175x_6x.o
  .debug_aranges
-                0x00000120       0x18 ./src/crp.o
+                0x00000108       0x18 ./src/crp.o
 
-.debug_ranges   0x00000000       0xf0
- .debug_ranges  0x00000000       0x30 ./src/FinalProject.o
- .debug_ranges  0x00000030       0x50 ./src/NoteOutput.o
- .debug_ranges  0x00000080       0x70 ./src/cr_startup_lpc175x_6x.o
+.debug_ranges   0x00000000       0xd8
+ .debug_ranges  0x00000000       0x10 ./src/FinalProject.o
+ .debug_ranges  0x00000010       0x58 ./src/NoteOutput.o
+ .debug_ranges  0x00000068       0x70 ./src/cr_startup_lpc175x_6x.o
 
-.debug_macro    0x00000000      0xb1f
- .debug_macro   0x00000000       0x1b ./src/FinalProject.o
- .debug_macro   0x0000001b      0xa72 ./src/FinalProject.o
- .debug_macro   0x00000a8d       0x27 ./src/NoteOutput.o
- .debug_macro   0x00000ab4       0x1d ./src/cr_startup_lpc175x_6x.o
- .debug_macro   0x00000ad1       0x1a ./src/crp.o
- .debug_macro   0x00000aeb       0x34 ./src/crp.o
+.debug_macro    0x00000000      0xb15
+ .debug_macro   0x00000000       0x11 ./src/FinalProject.o
+ .debug_macro   0x00000011      0xa72 ./src/FinalProject.o
+ .debug_macro   0x00000a83       0x27 ./src/NoteOutput.o
+ .debug_macro   0x00000aaa       0x1d ./src/cr_startup_lpc175x_6x.o
+ .debug_macro   0x00000ac7       0x1a ./src/crp.o
+ .debug_macro   0x00000ae1       0x34 ./src/crp.o
 
-.debug_line     0x00000000      0x4d8
- .debug_line    0x00000000       0xe0 ./src/FinalProject.o
- .debug_line    0x000000e0      0x1e8 ./src/NoteOutput.o
- .debug_line    0x000002c8      0x15f ./src/cr_startup_lpc175x_6x.o
- .debug_line    0x00000427       0xb1 ./src/crp.o
+.debug_line     0x00000000      0x471
+ .debug_line    0x00000000       0x4c ./src/FinalProject.o
+ .debug_line    0x0000004c      0x215 ./src/NoteOutput.o
+ .debug_line    0x00000261      0x15f ./src/cr_startup_lpc175x_6x.o
+ .debug_line    0x000003c0       0xb1 ./src/crp.o
 
-.debug_str      0x00000000     0x308c
- .debug_str     0x00000000     0x2d12 ./src/FinalProject.o
- .debug_str     0x00002d12       0xcf ./src/NoteOutput.o
-                               0x2dde (size before relaxing)
- .debug_str     0x00002de1      0x1c2 ./src/cr_startup_lpc175x_6x.o
+.debug_str      0x00000000     0x309f
+ .debug_str     0x00000000     0x2cd7 ./src/FinalProject.o
+ .debug_str     0x00002cd7      0x11d ./src/NoteOutput.o
+                               0x2df1 (size before relaxing)
+ .debug_str     0x00002df4      0x1c2 ./src/cr_startup_lpc175x_6x.o
                                0x2e91 (size before relaxing)
- .debug_str     0x00002fa3       0xe9 ./src/crp.o
+ .debug_str     0x00002fb6       0xe9 ./src/crp.o
                                0x2db2 (size before relaxing)
 
 .comment        0x00000000       0x49
@@ -377,10 +371,10 @@ LOAD linker stubs
  .ARM.attributes
                 0x000000b4       0x2d c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 
-.debug_frame    0x00000000      0x35c
- .debug_frame   0x00000000       0xa8 ./src/FinalProject.o
- .debug_frame   0x000000a8      0x144 ./src/NoteOutput.o
- .debug_frame   0x000001ec      0x170 ./src/cr_startup_lpc175x_6x.o
+.debug_frame    0x00000000      0x300
+ .debug_frame   0x00000000       0x28 ./src/FinalProject.o
+ .debug_frame   0x00000028      0x168 ./src/NoteOutput.o
+ .debug_frame   0x00000190      0x170 ./src/cr_startup_lpc175x_6x.o
 
 Cross Reference Table
 
@@ -450,7 +444,7 @@ initNoteSystem                                    ./src/NoteOutput.o
 main                                              ./src/FinalProject.o
                                                   c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 setChInterval                                     ./src/NoteOutput.o
-togglePin0                                        ./src/FinalProject.o
-togglePin1                                        ./src/FinalProject.o
-togglePin2                                        ./src/FinalProject.o
-togglePin3                                        ./src/FinalProject.o
+togglePin0                                        ./src/NoteOutput.o
+togglePin1                                        ./src/NoteOutput.o
+togglePin2                                        ./src/NoteOutput.o
+togglePin3                                        ./src/NoteOutput.o

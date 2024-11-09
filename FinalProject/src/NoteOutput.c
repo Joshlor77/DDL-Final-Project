@@ -39,10 +39,29 @@ void initNoteSystem(void){
  */
 unsigned int ChInterval[4];
 
+static void enableMCRInterrupt(int MR){
+    switch (MR) {
+    case 0:
+        T0.MCR |= 1;
+        return;
+    case 1:
+        T0.MCR |= (1 << 3);
+        return;
+    case 2:
+        T0.MCR |= (1 << 6);
+        return;
+    case 3:
+        T0.MCR |= (1 << 9);
+    	return;
+    default:
+    	return;
+    }
+}
+
 // Enables interrupt generation from the specified match register
 void enableCh(int MR){
-    T0.MCR |= (1 << MR);
-    T0.MR[0] = T0.TC + ChInterval[MR];
+	enableMCRInterrupt(MR);
+    T0.MR[MR] = T0.TC + ChInterval[MR];
 }
 
 // Changes the interval for the Match Register
