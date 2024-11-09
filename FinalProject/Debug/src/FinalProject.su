@@ -1,0 +1,5 @@
+../src/FinalProject.c:3:6:togglePin0	4	static
+../src/FinalProject.c:6:6:togglePin1	4	static
+../src/FinalProject.c:9:6:togglePin2	4	static
+../src/FinalProject.c:12:6:togglePin3	4	static
+../src/FinalProject.c:16:5:main	4	static

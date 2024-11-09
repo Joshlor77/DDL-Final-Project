@@ -3,7 +3,7 @@
 
 void initNoteSystem(void);
 void initNoteSystem(void);
-void setChInterval(int channel, int interval);
+void setChInterval(int channel, unsigned int interval);
 void disableCh(int channel);
 
 #endif

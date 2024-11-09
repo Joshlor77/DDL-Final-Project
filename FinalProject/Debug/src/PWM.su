@@ -1,0 +1,5 @@
+../src/PWM.c:35:6:PWMControls	32	static
+../src/PWM.c:47:6:writeMCR	16	static
+../src/PWM.c:51:6:PWMEnable	16	static
+../src/PWM.c:55:6:PWMLatchEnable	16	static
+../src/PWM.c:59:5:writeMR	16	static
