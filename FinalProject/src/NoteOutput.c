@@ -35,28 +35,9 @@ void initNoteSystem(void){
  */
 unsigned int ChInterval[4];
 
-static void enableMCRInterrupt(int MR){
-    switch (MR) {
-    case 0:
-        T0.MCR |= 1;
-        return;
-    case 1:
-        T0.MCR |= (1 << 3);
-        return;
-    case 2:
-        T0.MCR |= (1 << 6);
-        return;
-    case 3:
-        T0.MCR |= (1 << 9);
-    	return;
-    default:
-    	return;
-    }
-}
-
 // Enables interrupt generation from the specified match register
 void enableCh(int MR){
-	enableMCRInterrupt(MR);
+	T0.MCR |= (1 << 3*MR);
     T0.MR[MR] = T0.TC + ChInterval[MR];
 }
 
@@ -70,22 +51,7 @@ void setChInterval(int MR, unsigned int interval){
  */
 void disableCh(int MR){
     T0.IR = (1 << MR);
-    switch (MR) {
-    case 0:
-        T0.MCR |= 1;
-        return;
-    case 1:
-        T0.MCR |= (1 << 3);
-        return;
-    case 2:
-        T0.MCR |= (1 << 6);
-        return;
-    case 3:
-        T0.MCR |= (1 << 9);
-    	return;
-    default:
-    	return;
-    }
+    T0.MCR &= ~(1 << 3*MR);
 }
 
 int pinState [] = {1, 1, 1, 1};

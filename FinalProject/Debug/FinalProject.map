@@ -10,6 +10,8 @@ Discarded input sections
  .text          0x00000000        0x0 ./src/Clocking.o
  .data          0x00000000        0x0 ./src/Clocking.o
  .bss           0x00000000        0x0 ./src/Clocking.o
+ .text.outputClkPin
+                0x00000000       0x48 ./src/Clocking.o
  .group         0x00000000        0xc ./src/FinalProject.o
  .text          0x00000000        0x0 ./src/FinalProject.o
  .data          0x00000000        0x0 ./src/FinalProject.o
@@ -73,7 +75,7 @@ END GROUP
                 0x20084000                __top_RamAHB32 = 0x20084000
                 0x20084000                __top_RAM2 = 0x20084000
 
-.text           0x00000000      0x7b8
+.text           0x00000000      0x76c
  FILL mask 0xff
                 0x00000000                __vectors_start__ = ABSOLUTE (.)
  *(.isr_vector)
@@ -82,10 +84,10 @@ END GROUP
                 0x000000cc                . = ALIGN (0x4)
                 0x000000cc                __section_table_start = .
                 0x000000cc                __data_section_table = .
-                0x000000cc        0x4 LONG 0x7b8 LOADADDR (.data)
+                0x000000cc        0x4 LONG 0x76c LOADADDR (.data)
                 0x000000d0        0x4 LONG 0x10000000 ADDR (.data)
                 0x000000d4        0x4 LONG 0x10 SIZEOF (.data)
-                0x000000d8        0x4 LONG 0x7b8 LOADADDR (.data_RAM2)
+                0x000000d8        0x4 LONG 0x76c LOADADDR (.data_RAM2)
                 0x000000dc        0x4 LONG 0x2007c000 ADDR (.data_RAM2)
                 0x000000e0        0x4 LONG 0x0 SIZEOF (.data_RAM2)
                 0x000000e4                __data_section_table_end = .
@@ -162,73 +164,70 @@ END GROUP
  .text.PLL0StartUpSeq
                 0x00000358       0xc4 ./src/Clocking.o
                 0x00000358                PLL0StartUpSeq
- .text.outputClkPin
-                0x0000041c       0x48 ./src/Clocking.o
-                0x0000041c                outputClkPin
- .text.main     0x00000464       0x22 ./src/FinalProject.o
-                0x00000464                main
- *fill*         0x00000486        0x2 ff
+ .text.main     0x0000041c       0x1e ./src/FinalProject.o
+                0x0000041c                main
+ *fill*         0x0000043a        0x2 ff
  .text.initNoteSystem
-                0x00000488       0x6c ./src/NoteOutput.o
-                0x00000488                initNoteSystem
+                0x0000043c       0x6c ./src/NoteOutput.o
+                0x0000043c                initNoteSystem
  .text.enableMCRInterrupt
-                0x000004f4       0x78 ./src/NoteOutput.o
+                0x000004a8       0x78 ./src/NoteOutput.o
  .text.enableCh
-                0x0000056c       0x38 ./src/NoteOutput.o
-                0x0000056c                enableCh
+                0x00000520       0x38 ./src/NoteOutput.o
+                0x00000520                enableCh
  .text.setChInterval
-                0x000005a4       0x24 ./src/NoteOutput.o
-                0x000005a4                setChInterval
+                0x00000558       0x24 ./src/NoteOutput.o
+                0x00000558                setChInterval
  .text.togglePin0
-                0x000005c8       0x4c ./src/NoteOutput.o
-                0x000005c8                togglePin0
+                0x0000057c       0x4c ./src/NoteOutput.o
+                0x0000057c                togglePin0
  .text.togglePin1
-                0x00000614       0x4c ./src/NoteOutput.o
-                0x00000614                togglePin1
+                0x000005c8       0x4c ./src/NoteOutput.o
+                0x000005c8                togglePin1
  .text.togglePin2
-                0x00000660       0x4c ./src/NoteOutput.o
-                0x00000660                togglePin2
+                0x00000614       0x4c ./src/NoteOutput.o
+                0x00000614                togglePin2
  .text.togglePin3
-                0x000006ac       0x4c ./src/NoteOutput.o
-                0x000006ac                togglePin3
+                0x00000660       0x4c ./src/NoteOutput.o
+                0x00000660                togglePin3
  .text.TIMER0_IRQHandler
-                0x000006f8       0xbc ./src/NoteOutput.o
-                0x000006f8                TIMER0_IRQHandler
+                0x000006ac       0xbc ./src/NoteOutput.o
+                0x000006ac                TIMER0_IRQHandler
  .text.__weak_main
-                0x000007b4        0x4 c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
-                0x000007b4                __weak_main
-                0x000007b4                __main
+                0x00000768        0x4 c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
+                0x00000768                __weak_main
+                0x00000768                __main
  *(.rodata .rodata.* .constdata .constdata.*)
-                0x000007b8                . = ALIGN (0x4)
+                0x0000076c                . = ALIGN (0x4)
 
-.glue_7         0x000007b8        0x0
- .glue_7        0x000007b8        0x0 linker stubs
+.glue_7         0x0000076c        0x0
+ .glue_7        0x0000076c        0x0 linker stubs
 
-.glue_7t        0x000007b8        0x0
- .glue_7t       0x000007b8        0x0 linker stubs
+.glue_7t        0x0000076c        0x0
+ .glue_7t       0x0000076c        0x0 linker stubs
 
-.vfp11_veneer   0x000007b8        0x0
- .vfp11_veneer  0x000007b8        0x0 linker stubs
+.vfp11_veneer   0x0000076c        0x0
+ .vfp11_veneer  0x0000076c        0x0 linker stubs
 
-.v4_bx          0x000007b8        0x0
- .v4_bx         0x000007b8        0x0 linker stubs
+.v4_bx          0x0000076c        0x0
+ .v4_bx         0x0000076c        0x0 linker stubs
 
-.iplt           0x000007b8        0x0
- .iplt          0x000007b8        0x0 ./src/Clocking.o
+.iplt           0x0000076c        0x0
+ .iplt          0x0000076c        0x0 ./src/Clocking.o
 
-.rel.dyn        0x000007b8        0x0
- .rel.iplt      0x000007b8        0x0 ./src/Clocking.o
+.rel.dyn        0x0000076c        0x0
+ .rel.iplt      0x0000076c        0x0 ./src/Clocking.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x000007b8        0x0
-                0x000007b8                __exidx_start = .
+.ARM.exidx      0x0000076c        0x0
+                0x0000076c                __exidx_start = .
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-                0x000007b8                __exidx_end = .
-                0x000007b8                _etext = .
+                0x0000076c                __exidx_end = .
+                0x0000076c                _etext = .
 
-.data_RAM2      0x2007c000        0x0 load address 0x000007b8
+.data_RAM2      0x2007c000        0x0 load address 0x0000076c
  FILL mask 0xff
                 [!provide]                PROVIDE (__start_data_RAM2 = .)
                 [!provide]                PROVIDE (__start_data_RamAHB32 = .)
@@ -249,7 +248,7 @@ END GROUP
                 0x10000000                . = ALIGN (0x4)
                 0x10000000                _end_uninit_RESERVED = .
 
-.data           0x10000000       0x10 load address 0x000007b8
+.data           0x10000000       0x10 load address 0x0000076c
  FILL mask 0xff
                 0x10000000                _data = .
                 [!provide]                PROVIDE (__start_data_RAM = .)
@@ -268,7 +267,7 @@ END GROUP
                 [!provide]                PROVIDE (__end_data_RAM = .)
                 [!provide]                PROVIDE (__end_data_RamLoc32 = .)
 
-.igot.plt       0x10000010        0x0 load address 0x000007c8
+.igot.plt       0x10000010        0x0 load address 0x0000077c
  .igot.plt      0x10000010        0x0 ./src/Clocking.o
 
 .bss_RAM2       0x2007c000        0x0
@@ -321,8 +320,8 @@ END GROUP
                 0x10008000                PROVIDE (_vStackTop = DEFINED (__user_stack_top)?__user_stack_top:(__top_RamLoc32 - 0x0))
                 0xefff74da                PROVIDE (__valid_user_code_checksum = (0x0 - ((((((_vStackTop + (ResetISR + 0x1)) + (NMI_Handler + 0x1)) + (HardFault_Handler + 0x1)) + (DEFINED (MemManage_Handler)?MemManage_Handler:0x0 + 0x1)) + (DEFINED (BusFault_Handler)?BusFault_Handler:0x0 + 0x1)) + (DEFINED (UsageFault_Handler)?UsageFault_Handler:0x0 + 0x1))))
                 0x00000000                _image_start = LOADADDR (.text)
-                0x000007c8                _image_end = (LOADADDR (.data) + SIZEOF (.data))
-                0x000007c8                _image_size = (_image_end - _image_start)
+                0x0000077c                _image_end = (LOADADDR (.data) + SIZEOF (.data))
+                0x0000077c                _image_size = (_image_end - _image_start)
 OUTPUT(FinalProject.axf elf32-littlearm)
 LOAD linker stubs
 
@@ -369,12 +368,12 @@ LOAD linker stubs
  .debug_macro   0x00000b7b       0x1a ./src/crp.o
  .debug_macro   0x00000b95       0x34 ./src/crp.o
 
-.debug_line     0x00000000      0x686
+.debug_line     0x00000000      0x685
  .debug_line    0x00000000      0x143 ./src/Clocking.o
- .debug_line    0x00000143       0xa9 ./src/FinalProject.o
- .debug_line    0x000001ec      0x28a ./src/NoteOutput.o
- .debug_line    0x00000476      0x15f ./src/cr_startup_lpc175x_6x.o
- .debug_line    0x000005d5       0xb1 ./src/crp.o
+ .debug_line    0x00000143       0xa8 ./src/FinalProject.o
+ .debug_line    0x000001eb      0x28a ./src/NoteOutput.o
+ .debug_line    0x00000475      0x15f ./src/cr_startup_lpc175x_6x.o
+ .debug_line    0x000005d4       0xb1 ./src/crp.o
 
 .debug_str      0x00000000     0x33f4
  .debug_str     0x00000000     0x2f48 ./src/Clocking.o
@@ -491,7 +490,6 @@ initNoteSystem                                    ./src/NoteOutput.o
 main                                              ./src/FinalProject.o
                                                   c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 outputClkPin                                      ./src/Clocking.o
-                                                  ./src/FinalProject.o
 pinState                                          ./src/NoteOutput.o
 setChInterval                                     ./src/NoteOutput.o
                                                   ./src/FinalProject.o
