@@ -4,18 +4,21 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../src/Clocking.c \
 ../src/FinalProject.c \
 ../src/NoteOutput.c \
 ../src/cr_startup_lpc175x_6x.c \
 ../src/crp.c 
 
 C_DEPS += \
+./src/Clocking.d \
 ./src/FinalProject.d \
 ./src/NoteOutput.d \
 ./src/cr_startup_lpc175x_6x.d \
 ./src/crp.d 
 
 OBJS += \
+./src/Clocking.o \
 ./src/FinalProject.o \
 ./src/NoteOutput.o \
 ./src/cr_startup_lpc175x_6x.o \
@@ -34,7 +37,7 @@ src/%.o: ../src/%.c src/subdir.mk
 clean: clean-src
 
 clean-src:
-	-$(RM) ./src/FinalProject.d ./src/FinalProject.o ./src/NoteOutput.d ./src/NoteOutput.o ./src/cr_startup_lpc175x_6x.d ./src/cr_startup_lpc175x_6x.o ./src/crp.d ./src/crp.o
+	-$(RM) ./src/Clocking.d ./src/Clocking.o ./src/FinalProject.d ./src/FinalProject.o ./src/NoteOutput.d ./src/NoteOutput.o ./src/cr_startup_lpc175x_6x.d ./src/cr_startup_lpc175x_6x.o ./src/crp.d ./src/crp.o
 
 .PHONY: clean-src
 

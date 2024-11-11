@@ -14,8 +14,10 @@
  */
 
 #define ISER0 (*(volatile unsigned int *) 0xE000E100)
+#define PSEL0 (*(volatile unsigned int *) 0x400FC1A8)
 
 void initNoteSystem(void){
+	PSEL0 |= (1 << 2);	  //PCLK = CCLK
     T0.IR = 0xF;          //Clear MR Interupt flags
     T0.TCR |= 1;          //Enable Timer0 counter
     ISER0 = (1 << 1);     //Enable Timer0 interrupts
@@ -35,28 +37,9 @@ void initNoteSystem(void){
  */
 unsigned int ChInterval[4];
 
-static void enableMCRInterrupt(int MR){
-    switch (MR) {
-    case 0:
-        T0.MCR |= 1;
-        return;
-    case 1:
-        T0.MCR |= (1 << 3);
-        return;
-    case 2:
-        T0.MCR |= (1 << 6);
-        return;
-    case 3:
-        T0.MCR |= (1 << 9);
-    	return;
-    default:
-    	return;
-    }
-}
-
 // Enables interrupt generation from the specified match register
 void enableCh(int MR){
-	enableMCRInterrupt(MR);
+	T0.MCR |= (1 << 3*MR);
     T0.MR[MR] = T0.TC + ChInterval[MR];
 }
 
@@ -70,22 +53,7 @@ void setChInterval(int MR, unsigned int interval){
  */
 void disableCh(int MR){
     T0.IR = (1 << MR);
-    switch (MR) {
-    case 0:
-        T0.MCR |= 1;
-        return;
-    case 1:
-        T0.MCR |= (1 << 3);
-        return;
-    case 2:
-        T0.MCR |= (1 << 6);
-        return;
-    case 3:
-        T0.MCR |= (1 << 9);
-    	return;
-    default:
-    	return;
-    }
+    T0.MCR &= ~(1 << 3*MR);
 }
 
 int pinState [] = {1, 1, 1, 1};
