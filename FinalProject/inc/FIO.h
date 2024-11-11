@@ -10,6 +10,7 @@ struct FIOstruct {
 	unsigned int CLR;
 };
 #define FIO 		((volatile struct FIOstruct *) 0x2009c000)
-#define PINMODE		((volatile unsigned int *)	0x4002C040)
+#define PINSEL		((volatile unsigned int *) 0x4002C000)
+#define PINMODE		((volatile unsigned int *) 0x4002C040)
 
 #endif

@@ -15,19 +15,6 @@
 #define SCS 		(*(volatile unsigned int *)0x400FC1A0)
 #define OSCSTAT		((SCS >> 6) & 1u)
 
-struct FIOstruct {
-	unsigned int DIR;
-	unsigned int filler [3];
-	unsigned int MASK;
-	unsigned int PIN;
-	unsigned int SET;
-	unsigned int CLR;
-};
-
-#define FIO 		((volatile struct FIOstruct *) 0x2009c000)
-#define PINSEL3		(*(volatile unsigned int *) 0x4002C00C)
-#define PINMODE3 	(*(volatile unsigned int *) 0x4002c04c)
-
 static void mainOscStartUp(){
 	//Enable
 	SCS |= (1 << 5);
@@ -62,7 +49,7 @@ void PLL0StartUpSeq(){
 	//PLL Multiplier
 	PLL0CFG &= ~(0x7FFF);
 	feedSeq();
-	unsigned int M = 7;
+	unsigned int M = 16;
 	PLL0CFG |= (M - 1);
 	feedSeq();
 
@@ -89,7 +76,7 @@ void PLL0StartUpSeq(){
 //Outputs the clock to P1.27, this is to test what the CPU clock is.
 void outputClkPin(){
 	CLKOUTCFG &= ~15u;
-	PINMODE3 |= (1 << 23);
-	PINSEL3 |= (1 << 22);
+	PINMODE[3] |= (1 << 23);
+	PINSEL[3] |= (1 << 22);
 	CLKOUTCFG |= (1 << 8);
 }

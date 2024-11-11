@@ -1,0 +1,4 @@
+../src/Clocking.c:18:13:mainOscStartUp	4	static
+../src/Clocking.c:28:6:feedSeq	16	static
+../src/Clocking.c:36:6:PLL0StartUpSeq	16	static
+../src/Clocking.c:77:6:outputClkPin	4	static
