@@ -6,8 +6,8 @@ int main() {
 	PLL0StartUpSeq();
 	initNoteSystem();
 
-	setChInterval(1, 4000);
-	enableCh(1);
+	setChInterval(0, 8000);
+	enableCh(0);
 
     while(1) {
 

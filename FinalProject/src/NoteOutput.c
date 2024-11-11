@@ -14,8 +14,10 @@
  */
 
 #define ISER0 (*(volatile unsigned int *) 0xE000E100)
+#define PSEL0 (*(volatile unsigned int *) 0x400FC1A8)
 
 void initNoteSystem(void){
+	PSEL0 |= (1 << 2);	  //PCLK = CCLK
     T0.IR = 0xF;          //Clear MR Interupt flags
     T0.TCR |= 1;          //Enable Timer0 counter
     ISER0 = (1 << 1);     //Enable Timer0 interrupts
