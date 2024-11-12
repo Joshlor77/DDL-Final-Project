@@ -1,0 +1,4 @@
+../src/NoteOutputPWM.c:8:6:initNoteSystemPWM	4	static
+../src/NoteOutputPWM.c:25:6:enablePWMCh	4	static
+../src/NoteOutputPWM.c:32:6:calculateSamples	24	static
+../src/NoteOutputPWM.c:39:6:PWM1_IRQHandler	4	static

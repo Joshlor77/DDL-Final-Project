@@ -22,12 +22,9 @@ void initNoteSystem(void){
     T0.TCR |= 1;          //Enable Timer0 counter
     ISER0 = (1 << 1);     //Enable Timer0 interrupts
 
-	//Set P0.2 and P0.3 as outputs and set no pull resistors
-	FIO[0].DIR |= (3 << 2);
-	PINMODE[0] |= (0xA << 4);
-	//Set P0.21 and P0.22 as outputs and set no pull resistors
-	FIO[0].DIR |= (3 << 21);
-	PINMODE[1] |= (0xA << 10);
+	//Set P0.23, P0.24, P0.25, P0.26 as outputs and set no pull resistors
+	FIO[0].DIR |= (0xF << 23);
+	PINMODE[1] |= (0xAA << 14);
 }
 
 /* Contains the time intervals for each Match Register
@@ -59,30 +56,30 @@ void disableCh(int MR){
 int pinState [] = {1, 1, 1, 1};
 void togglePin0(){
 	if (pinState[0])
-		FIO[0].SET |= (1 << 2);
+		FIO[0].SET |= (1 << 23);
 	else
-		FIO[0].CLR |= (1 << 2);
+		FIO[0].CLR |= (1 << 23);
 	pinState[0] = !pinState[0];
 }
 void togglePin1(){
 	if (pinState[1])
-		FIO[0].SET |= (1 << 3);
+		FIO[0].SET |= (1 << 24);
 	else
-		FIO[0].CLR |= (1 << 3);
+		FIO[0].CLR |= (1 << 24);
 	pinState[1] = !pinState[1];
 }
 void togglePin2(){
 	if (pinState[2])
-		FIO[0].SET |= (1 << 21);
+		FIO[0].SET |= (1 << 25);
 	else
-		FIO[0].CLR |= (1 << 21);
+		FIO[0].CLR |= (1 << 25);
 	pinState[2] = !pinState[2];
 }
 void togglePin3(){
 	if (pinState[3])
-		FIO[0].SET |= (1 << 22);
+		FIO[0].SET |= (1 << 26);
 	else
-		FIO[0].CLR |= (1 << 22);
+		FIO[0].CLR |= (1 << 26);
 	pinState[3] = !pinState[3];
 }
 
