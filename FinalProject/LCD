@@ -1,0 +1,112 @@
+#include "LPC17xx.h"
+
+// Define control and data pins
+#define RS (1<<0)  // RS pin connected to P0.0
+#define RW (1<<1)  // RW pin connected to P0.1 (ground if not used)
+#define EN (1<<2)  // EN pin connected to P0.2
+#define D0 (1<<3)  // DB0 pin connected to P0.3
+#define D1 (1<<4)  // DB1 pin connected to P0.4
+#define D2 (1<<5)  // DB2 pin connected to P0.5
+#define D3 (1<<6)  // DB3 pin connected to P0.6
+#define D4 (1<<7)  // DB4 pin connected to P0.7
+#define D5 (1<<8)  // DB5 pin connected to P0.8
+#define D6 (1<<9)  // DB6 pin connected to P0.9
+#define D7 (1<<10) // DB7 pin connected to P0.10
+
+// Delay functions
+void delay_ms(int ms) {
+    for (int i = 0; i < ms * 10000; i++) {
+        __NOP();
+    }
+}
+
+void delay_us(int us) {
+    for (int i = 0; i < us * 10; i++) {
+        __NOP();
+    }
+}
+
+// Write a command to the LCD
+void LCDwriteCommand(uint8_t cmd) {
+    LPC_GPIO0->FIOCLR = RS;            // RS = 0 for command
+    LPC_GPIO0->FIOCLR = RW;            // RW = 0 for write
+    LPC_GPIO0->FIOPIN = (cmd << 3);    // Set DB0-DB7
+    LPC_GPIO0->FIOSET = EN;            // E = 1 to enable
+    delay_us(1);                       // Short delay for pulse
+    LPC_GPIO0->FIOCLR = EN;            // E = 0 to latch data
+    delay_us(100);                     // Wait for command to complete
+}
+
+// Write data to the LCD
+void LCDwriteData(uint8_t data) {
+    LPC_GPIO0->FIOSET = RS;            // RS = 1 for data
+    LPC_GPIO0->FIOCLR = RW;            // RW = 0 for write
+    LPC_GPIO0->FIOPIN = (data << 3);   // Set DB0-DB7
+    LPC_GPIO0->FIOSET = EN;            // E = 1 to enable
+    delay_us(1);                       // Short delay for pulse
+    LPC_GPIO0->FIOCLR = EN;            // E = 0 to latch data
+    delay_us(100);                     // Wait for data processing
+}
+
+// Initialize the LCD
+void LCD_init() {
+    LPC_GPIO0->FIODIR |= RS | RW | EN | D0 | D1 | D2 | D3 | D4 | D5 | D6 | D7;
+
+    delay_ms(4);                       // Wait for LCD to power up
+    LCDwriteCommand(0x38);             // 8-bit mode, 2-line display
+    LCDwriteCommand(0x06);             // Auto-increment cursor
+    LCDwriteCommand(0x0C);             // Display on, cursor off
+    LCDwriteCommand(0x01);             // Clear display
+    delay_ms(4);                       // Wait for clear command
+}
+
+// Set cursor to a specific position
+void LCD_setCursor(uint8_t row, uint8_t col) {
+    uint8_t address = col;
+    switch (row) {
+        case 0: address += 0x00; break;
+        case 1: address += 0x40; break;
+        case 2: address += 0x14; break;
+        case 3: address += 0x54; break;
+    }
+    LCDwriteCommand(0x80 | address);   // Set cursor position
+}
+
+// Display a string on the LCD
+void LCD_displayString(char *str) {
+    while (*str) {
+        LCDwriteData(*str++);          // Send each character
+    }
+}
+
+// Define a custom character
+void LCD_defineCustomChar(uint8_t location, uint8_t *pattern) {
+    location &= 0x07;                  // Only 8 locations (0-7)
+    LCDwriteCommand(0x40 | (location << 3));  // Set CGRAM address
+    for (int i = 0; i < 8; i++) {
+        LCDwriteData(pattern[i]);      // Write each row of the pattern
+    }
+    LCDwriteCommand(0x80);             // Return to DDRAM
+}
+
+// Main function
+int main() {
+    LCD_init();                        // Initialize the LCD
+
+    // Define a custom character 
+    uint8_t empty[8] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    LCD_defineCustomChar(0, empty);
+
+    LCD_setCursor(0, 0);               // Set cursor to top left
+    LCD_displayString("String Value");
+
+    LCD_setCursor(1, 0);               // Set cursor to second line
+    LCD_displayString("Custom Char: ");
+    LCDwriteData(0x00);                // Display custom empty character
+
+    while (1) {
+        // Main loop (idle)
+    }
+
+    return 0;
+}
