@@ -33,18 +33,18 @@ void LCDwriteCommand(unsigned int cmd) {
     FIO[0].CLR = RW;            // RW = 0 for write
     FIO[0].PIN = (cmd << 3);    // Set DB0-DB7
     FIO[0].SET = EN;            // E = 1 to enable
-    delay_us(1);                       // Short delay for pulse
+    delay_us(100);                       // Short delay for pulse
     FIO[0].CLR = EN;            // E = 0 to latch data
     delay_us(100);                     // Wait for command to complete
 }
 
 // Write data to the LCD
-void LCDwriteData(unsigned int data) {
+void LCDwriteData(char data) {
+    FIO[0].PIN = (data << 3);   // Set DB0-DB7
     FIO[0].SET = RS;            // RS = 1 for data
     FIO[0].CLR = RW;            // RW = 0 for write
-    FIO[0].PIN = (data << 3);   // Set DB0-DB7
     FIO[0].SET = EN;            // E = 1 to enable
-    delay_us(1);                       // Short delay for pulse
+    delay_us(100);                       // Short delay for pulse
     FIO[0].CLR = EN;            // E = 0 to latch data
     delay_us(100);                     // Wait for data processing
 }
@@ -56,7 +56,7 @@ void LCD_init() {
     delay_ms(4);                       // Wait for LCD to power up
     LCDwriteCommand(0x38);             // 8-bit mode, 2-line display
     LCDwriteCommand(0x06);             // Auto-increment cursor
-    LCDwriteCommand(0x0C);             // Display on, cursor off
+    LCDwriteCommand(0x0F);             // Display on, cursor off
     LCDwriteCommand(0x01);             // Clear display
     delay_ms(4);                       // Wait for clear command
 }
@@ -96,17 +96,10 @@ int main() {
     initNoteSystem();				   // Initialize the note output system.
 	LCD_init();                        // Initialize the LCD
 
-
     // Define a custom character 
-    //unsigned int empty[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x1C, 0x1C};
-    //LCD_defineCustomChar(0, empty);
-
-    LCD_setCursor(0, 0);               // Set cursor to top left
-    LCD_displayString("String Value");
-
-    LCD_setCursor(1, 0);               // Set cursor to second line
-    LCD_displayString("Custom Char: ");
-    LCDwriteData(0x41);                // Display custom empty character
+    unsigned int empty[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x1C, 0x1C};
+    LCD_defineCustomChar(0, empty);
+    LCDwriteData(0x00);
 
     while (1) {
         // Main loop (idle)
