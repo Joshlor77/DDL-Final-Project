@@ -92,9 +92,10 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
 
 // Main function
 int main() {
-    PLL0StartUpSeq();				   // Set CPU Clock to 16Mhz
-    initNoteSystem();				   // Initialize the note output system.
-	LCD_init();                        // Initialize the LCD
+    unsigned int DACdata = 512;
+    PLL0StartUpSeq();				     // Set CPU Clock to 16Mhz
+    initNoteSystem(&DACdata);		     // Initialize the note output system.
+	LCD_init();                          // Initialize the LCD
 
     // Define a custom character 
     unsigned int quarter[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x1C, 0x1C};
@@ -111,12 +112,6 @@ int main() {
 
     unsigned int flat[8] = {0x10, 0x10, 0x10, 0x16, 0x19, 0x12, 0x14, 0x18};
     LCD_defineCustomChar(4, flat);
-
-    LCDwriteData(0);
-    LCDwriteData(1);
-    LCDwriteData(2);
-    LCDwriteData(3);
-    LCDwriteData(4);
 
     while (1) {
         // Main loop (idle)
