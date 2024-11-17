@@ -6,4 +6,4 @@
 ../src/FinalProject.c:65:6:LCD_setCursor	24	static
 ../src/FinalProject.c:77:6:LCD_displayString	16	static
 ../src/FinalProject.c:84:6:LCD_defineCustomChar	24	static
-../src/FinalProject.c:94:5:main	176	static
+../src/FinalProject.c:97:5:main	176	static

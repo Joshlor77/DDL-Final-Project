@@ -90,11 +90,13 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
     LCDwriteCommand(0x80);             // Return to DDRAM
 }
 
+#define DACR        (*(volatile unsigned int *) 0x4008C000)
+int val;
+
 // Main function
 int main() {
-    unsigned int DACdata = 512;
     PLL0StartUpSeq();				     // Set CPU Clock to 16Mhz
-    initNoteSystem(&DACdata);		     // Initialize the note output system.
+    initNoteSystem();		    		 // Initialize the note output system.
 	LCD_init();                          // Initialize the LCD
 
     // Define a custom character 
@@ -114,7 +116,8 @@ int main() {
     LCD_defineCustomChar(4, flat);
 
     while (1) {
-        // Main loop (idle)
+    	val = DACR;
+    	//DACR |= 1023 << 6;
     }
 
     return 0;
