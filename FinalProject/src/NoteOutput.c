@@ -39,7 +39,7 @@ LLI LLI1, LLI2;
 /////////////////////////////////////////////////////////////////////
 
 #define PCLK        16000000    // Hz
-#define SampleRate  1024      // Hz
+#define SampleRate  44100      // Hz
 
 #define PCLKSEL0    (*(volatile unsigned int *) 0x400FC1A8)
 #define PCONP       (*(volatile unsigned int *) 0x400Fc0C4)
@@ -54,7 +54,7 @@ LLI LLI1, LLI2;
   * https://github.com/ppelikan/drlut
   **/
 // Formula: sin(2*pi*t/T)
-unsigned short soundData [1024] = {
+unsigned short lut [1024] = {
    512,   515,   518,   521,   525,   528,   531,
    534,   537,   540,   543,   546,   550,   553,
    556,   559,   562,   565,   568,   571,   575,
@@ -203,13 +203,41 @@ unsigned short soundData [1024] = {
    484,   487,   490,   493,   496,   499,   503,
    506,   509 };
 
+int buff0 [1024];
+int buff1 [1024];
+int transferSize = 1024;
+
+int currentBuff = 0;
+void inline generateNote(int frequency, float beats){
+
+    for (int i = 0; i < 1)
 
 
-int transferSize = 511;
+    if (currentBuff){
+        configDMACC0((unsigned int) &buff0);
+        currentBuff = 0;
+    } else {
+        configDMACC0((unsigned int) &buff1);
+        currentBuff = 1;
+    }
+}
+
+void configDMACC0(int* data){
+    DMACC0.SrcAddr = (unsigned int) data;
+    DMACC0.DestAddr = (unsigned int) &DACR;
+    DMACC0.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
+    DMACC0.Config =
+        (1) |       //Enable Ch0
+        (7 << 6) |  //DAC Peripheral
+        (1 << 11);  //Memory to Peripheral
+	DMACC0.LLI = (unsigned int) &LLI1;
+    //Enable DMA Channel 0
+    DMACC0.Config |= 1;
+}
 
 void initNoteSystem(void){
-    for (int i = 0; i < sizeof(soundData)/sizeof(short); i++){
-        soundData[i] = (soundData[i] << 6);
+    for (int i = 0; i < sizeof(lut)/sizeof(short); i++){
+        lut[i] = (lut[i] << 6);
     }
 
     //Set P0.26 function to AOUT and mode to no pull resistors
@@ -229,31 +257,7 @@ void initNoteSystem(void){
     DMACIntErrClr = 1;
     DMACIntTCClear = 1;
 
-    //Set Source Address and Destination Address for DMA
-    DMACC0.SrcAddr = (unsigned int) &soundData[0];
-    DMACC0.DestAddr = (unsigned int) &DACR;
-
-    //Configure LLI's
-    LLI1.SrcAddr = (unsigned int) &soundData[0];
-    LLI1.DestAddr = (unsigned int) &DACR;
-    LLI1.LLI = (unsigned int) &LLI2;
-    LLI1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
-
-    LLI2.SrcAddr = (unsigned int) &soundData[512];
-    LLI2.DestAddr = (unsigned int) &DACR;
-    LLI2.LLI = (unsigned int) &LLI1;
-    LLI2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
-
-    //Set relevant settings for DMACC0
-    DMACC0.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
-    DMACC0.Config =
-        (1) |       //Enable Ch0
-        (7 << 6) |  //DAC Peripheral
-        (1 << 11);  //Memory to Peripheral
-	DMACC0.LLI = (unsigned int) &LLI1;
-
-    //Enable DMA Channel 0
-    DMACC0.Config |= 1;
+    configDMACC0((unsigned int) &buff0);
 
     //Set DMA Counter for DAC
     DACCNTVAL = PCLK / SampleRate;
