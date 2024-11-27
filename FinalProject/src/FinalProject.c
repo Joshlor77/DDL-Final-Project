@@ -19,7 +19,10 @@
 
 #define DACR        (*(volatile unsigned int *) 0x4008C000)
 
-#define PI          3.141592653589793238462643383279 
+#define PI          	3.141592653589793238462643383279
+#define BuffSize		4096
+#define transferSize 	2047
+#define NumNotes		5
 
 #define BBPM        112
 #define SampleRate  44100 //Hz
@@ -35,18 +38,16 @@ typedef struct {
 
 LLI LLIA1, LLIA2;
 LLI LLIB1, LLIB2;
-const int buffSize = 4096;
-const int transferSize = 2047;
-unsigned short buffA [buffSize];
-unsigned short buffB [buffSize];
+//unsigned short buffA [buffSize];
+unsigned short buffB [BuffSize];
 int freeBufferFlag = 0; // 0 for buffA, 1 for buffB. Indicates which buffer isn't being used by the DMA
 int generatePaused = 0;
 int bufferChanged = 0; //1 when buffer is swapped.
 
 const int samplesPerBeat = (SampleRate * 60) / BBPM;
 const int numNotes = 5;
-int notes [numNotes] = {440, 550, 660, 770, 880};
-int beats [numNotes] = {4, 4, 4, 4, 4};
+int notes [NumNotes] = {440, 550, 660, 770, 880};
+int beats [NumNotes] = {4, 4, 4, 4, 4};
 /////////////////////////////////////////////////////////////////////
 /////////////////// Function Declarations ///////////////////////////
 void delay_us(int us);
@@ -85,6 +86,7 @@ int main() {
     int samplesToGenerate = beats[note] * samplesPerBeat;
     int f = notes[note];
     while (1) {
+    	/*
         if (!generatePaused){
             if (bufferChanged){ //When buffer is swapped
                 bufferChanged = 0;
@@ -108,6 +110,7 @@ int main() {
             }
             n++;
         }
+        */
     }
 
     return 0;
@@ -137,23 +140,23 @@ void initialize(void){
     LCD_defineCustomChar(4, flat);
 
     LLIA1.SrcAddr = (unsigned int) &buffA[0];
-    LLIA1.DestAddr = &DACR;
-    LLIA1.LLI = &LLIA2;
-    LLIA1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
+    LLIA1.DestAddr = (unsigned int) &DACR;
+    LLIA1.LLI = (unsigned int) &LLIA2;
+    LLIA1.Control =  transferSize | (1 << 18) | (1 << 21) | (1 << 26);
 
     LLIA2.SrcAddr = (unsigned int) &buffA[2048];
-    LLIA2.DestAddr = &DACR;
-    LLIA2.LLI = &LLIB1;
+    LLIA2.DestAddr = (unsigned int) &DACR;
+    LLIA2.LLI = (unsigned int) &LLIA1;
     LLIA1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
 
     LLIB1.SrcAddr = (unsigned int) &buffB[0];
-    LLIB1.DestAddr = &DACR;
-    LLIB1.LLI = &LLIB2;
+    LLIB1.DestAddr = (unsigned int) &DACR;
+    LLIB1.LLI = (unsigned int) &LLIB2;
     LLIB1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
 
     LLIB2.SrcAddr = (unsigned int) &buffB[2048];
-    LLIB2.DestAddr = &DACR;
-    LLIB2.LLI = &LLIA1;
+    LLIB2.DestAddr = (unsigned int) &DACR;
+    LLIB2.LLI = (unsigned int) &LLIA1;
     LLIB1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
 
     initNoteSystem();
