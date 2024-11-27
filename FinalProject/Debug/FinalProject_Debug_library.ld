@@ -6,7 +6,7 @@
  * Generated linker script file for LPC1769
  * Created from library.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.30
- * MCUXpresso IDE v11.6.1 [Build 8255] [2022-10-03] on Nov 27, 2024, 1:30:53 PM
+ * MCUXpresso IDE v11.6.1 [Build 8255] [2022-10-03] on Nov 27, 2024, 2:22:07 PM
  */
 
 GROUP (
