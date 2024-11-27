@@ -18,10 +18,11 @@
 #define D7 (1<<10) // DB7 pin connected to P0.10
 
 #define DACR        (*(volatile unsigned int *) 0x4008C000)
+#define ISER0 		(*(volatile unsigned int *) 0xE000E100)
 
 #define PI          	3.141592653589793238462643383279
 #define BuffSize		4096
-#define transferSize 	1024
+#define transferSize 	2047
 #define NumNotes		5
 
 #define BBPM        112
@@ -38,7 +39,7 @@ typedef struct {
 
 LLI LLIA1, LLIA2;
 LLI LLIB1, LLIB2;
-//unsigned short buffA [buffSize];
+unsigned short buffA [BuffSize];
 unsigned short buffB [BuffSize];
 int freeBufferFlag = 0; // 0 for buffA, 1 for buffB. Indicates which buffer isn't being used by the DMA
 int generatePaused = 0;
@@ -46,8 +47,8 @@ int bufferChanged = 0; //1 when buffer is swapped.
 
 const int samplesPerBeat = (SampleRate * 60) / BBPM;
 const int numNotes = 5;
-int notes [NumNotes] = {440, 550, 660, 770, 880};
-int beats [NumNotes] = {4, 4, 4, 4, 4};
+int notes [NumNotes] = {4, 4, 4, 4, 4};
+int beats [NumNotes] = {112, 112, 112, 112, 112};
 /////////////////////////////////////////////////////////////////////
 /////////////////// Function Declarations ///////////////////////////
 void delay_us(int us);
@@ -61,32 +62,44 @@ void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
 void initNoteSystem(void);
+void setDMABuffA(void);
+void setDMABuffB(void);
 
 void initialize(void);
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 
 void DMA_IRQHandler(void){
-    if (DMACIntTCStat & 1){
-        freeBufferFlag = !freeBufferFlag;
-        generatePaused = 0;
-        bufferChanged = 1;
-        DMACIntTCClear = 1;
-    }
+	freeBufferFlag = !freeBufferFlag;
+	generatePaused = 0;
+	bufferChanged = 1;
+	DMACIntTCClear = 1;
+	DMACIntErrClr = 1;
+	if (freeBufferFlag){
+		setDMABuffB();
+	} else {
+		setDMABuffA();
+	}
 }
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
+int val;
+int chan;
 int main() {
+    for (int i = 0; i < 4096; i++){
+    	buffA[i] = 511.5 * sin(2*PI*i/SampleRate) + 511.5;
+    	buffA[i] = buffA[i] << 6;
+    }
     initialize();
-    //int n = 0;
-    //int prevN = 0;
-    //int note = 0;
-    //int samplesToGenerate = beats[note] * samplesPerBeat;
-    //int f = notes[note];
+    int n = 0;
+    int prevN = 0;
+    int note = 0;
+    int samplesToGenerate = beats[note] * samplesPerBeat;
     while (1) {
-    	/*
+    	val = DACR;
+    	chan = DMACEnbldChns & 1;
         if (!generatePaused){
             if (bufferChanged){ //When buffer is swapped
                 bufferChanged = 0;
@@ -101,16 +114,17 @@ int main() {
             if (n >= samplesToGenerate){ //When current note is done generating
                 note++;
                 samplesToGenerate = beats[note] * samplesPerBeat;
-                f = notes[note];
             }
             if (freeBufferFlag){
-                buffA[n] = 1023*sin(f * 2.0 * PI * n / SampleRate);
+                buffA[n] = 511.5*sin(notes[note] * 2 * PI * n / SampleRate) + 511.5;
+                buffA[n] = buffA[n] << 6;
             } else {
-                buffB[n] = 1023*sin(f * 2.0 * PI * n / SampleRate);
+                buffB[n] = 511.5*sin(notes[note] * 2 * PI * n / SampleRate) + 511.5;
+                buffB[n] = buffB[n] << 6;
             }
             n++;
         }
-        */
+
     }
 
     return 0;
@@ -146,8 +160,8 @@ void initialize(void){
 
     LLIA2.SrcAddr = (unsigned int) &buffA[2048];
     LLIA2.DestAddr = (unsigned int) &DACR;
-    LLIA2.LLI = (unsigned int) &LLIA1;
-    LLIA2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
+    LLIA2.LLI = (unsigned int) 0;
+    LLIA2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1u << 31);
 
     LLIB1.SrcAddr = (unsigned int) &buffB[0];
     LLIB1.DestAddr = (unsigned int) &DACR;
@@ -156,8 +170,12 @@ void initialize(void){
 
     LLIB2.SrcAddr = (unsigned int) &buffB[2048];
     LLIB2.DestAddr = (unsigned int) &DACR;
-    LLIB2.LLI = (unsigned int) &LLIA1;
-    LLIB2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
+    LLIB2.LLI = (unsigned int) 0;
+    LLIB2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1u << 31);
+
+    for (int i = 0; i < 4096; i++){
+    	buffA[i] = buffA[i] << 6;
+    }
 
     initNoteSystem();
 }
@@ -245,6 +263,9 @@ void initNoteSystem(void){
     //Set PCLK divider to 1 for DAC
     PCLKSEL0 |= (1 << 22);
 
+    //Enable Interrupts
+    ISER0 = (1 << 26);
+
     //Enable DMA Peripheral and enable DMA controller
     PCONP |= (1 << 29);
     DMACConfig |= 1;
@@ -254,9 +275,19 @@ void initNoteSystem(void){
     DMACIntErrClr = 1;
     DMACIntTCClear = 1;
 
+    setDMABuffA();
+
+    //Set DMA Counter for DAC
+    DACCNTVAL = PCLK / SampleRate;
+
+    //Enable DMA access and DMA counter
+    DACCTRL |= (1 << 2) | (1 << 3);
+}
+
+void setDMABuffA(void){
     DMACC0.SrcAddr = (unsigned int) &buffA[0];
     DMACC0.DestAddr = (unsigned int) &DACR;
-    DMACC0.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
+    DMACC0.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1u << 31);
     DMACC0.Config =
         (1) |       //Enable Ch0
         (7 << 6) |  //DAC Peripheral
@@ -264,10 +295,17 @@ void initNoteSystem(void){
 	DMACC0.LLI = (unsigned int) &LLIA2;
     //Enable DMA Channel 0
     DMACC0.Config |= 1;
+}
 
-    //Set DMA Counter for DAC
-    DACCNTVAL = PCLK / SampleRate;
-
-    //Enable DMA access and DMA counter
-    DACCTRL |= (1 << 2) | (1 << 3);
+void setDMABuffB(void){
+    DMACC0.SrcAddr = (unsigned int) &buffB[0];
+    DMACC0.DestAddr = (unsigned int) &DACR;
+    DMACC0.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1u << 31);
+    DMACC0.Config =
+        (1) |       //Enable Ch0
+        (7 << 6) |  //DAC Peripheral
+        (1 << 11);  //Memory to Peripheral
+	DMACC0.LLI = (unsigned int) &LLIB2;
+    //Enable DMA Channel 0
+    DMACC0.Config |= 1;
 }
