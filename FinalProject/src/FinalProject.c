@@ -21,11 +21,11 @@
 
 #define PI          	3.141592653589793238462643383279
 #define BuffSize		4096
-#define transferSize 	2047
+#define transferSize 	1024
 #define NumNotes		5
 
 #define BBPM        112
-#define SampleRate  44100 //Hz
+#define SampleRate  4096 //Hz
 #define PCLK        16000000 // Hz for DAC
 
 ////////////////////// Global Variables /////////////////////////////
@@ -80,11 +80,11 @@ void DMA_IRQHandler(void){
 
 int main() {
     initialize();
-    int n = 0;
-    int prevN = 0;
-    int note = 0;
-    int samplesToGenerate = beats[note] * samplesPerBeat;
-    int f = notes[note];
+    //int n = 0;
+    //int prevN = 0;
+    //int note = 0;
+    //int samplesToGenerate = beats[note] * samplesPerBeat;
+    //int f = notes[note];
     while (1) {
     	/*
         if (!generatePaused){
@@ -147,7 +147,7 @@ void initialize(void){
     LLIA2.SrcAddr = (unsigned int) &buffA[2048];
     LLIA2.DestAddr = (unsigned int) &DACR;
     LLIA2.LLI = (unsigned int) &LLIA1;
-    LLIA1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
+    LLIA2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
 
     LLIB1.SrcAddr = (unsigned int) &buffB[0];
     LLIB1.DestAddr = (unsigned int) &DACR;
@@ -157,7 +157,7 @@ void initialize(void){
     LLIB2.SrcAddr = (unsigned int) &buffB[2048];
     LLIB2.DestAddr = (unsigned int) &DACR;
     LLIB2.LLI = (unsigned int) &LLIA1;
-    LLIB1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
+    LLIB2.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
 
     initNoteSystem();
 }
