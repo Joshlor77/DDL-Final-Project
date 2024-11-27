@@ -2,6 +2,7 @@
 #include "Clocking.h"
 #include "Timer.h"
 #include "FIO.h"
+#include <math.h>
 
 // Define control and data pins
 #define RS (1<<0)  // RS pin connected to P0.0
@@ -15,6 +16,148 @@
 #define D5 (1<<8)  // DB5 pin connected to P0.8
 #define D6 (1<<9)  // DB6 pin connected to P0.9
 #define D7 (1<<10) // DB7 pin connected to P0.10
+
+#define DACR        (*(volatile unsigned int *) 0x4008C000)
+
+#define PI          3.141592653589793238462643383279 
+
+#define BBPM        112
+#define SampleRate  44100 //Hz
+#define PCLK        16000000 // Hz for DAC
+
+////////////////////// Global Variables /////////////////////////////
+typedef struct {
+    unsigned int SrcAddr;
+    unsigned int DestAddr;
+    unsigned int LLI;
+    unsigned int Control;
+} LLI;
+
+LLI LLIA1, LLIA2;
+LLI LLIB1, LLIB2;
+const int buffSize = 4096;
+const int transferSize = 2047;
+unsigned short buffA [buffSize];
+unsigned short buffB [buffSize];
+int freeBufferFlag = 0; // 0 for buffA, 1 for buffB. Indicates which buffer isn't being used by the DMA
+int generatePaused = 0;
+int bufferChanged = 0; //1 when buffer is swapped.
+
+const int samplesPerBeat = (SampleRate * 60) / BBPM;
+const int numNotes = 5;
+int notes [numNotes] = {440, 550, 660, 770, 880};
+int beats [numNotes] = {4, 4, 4, 4, 4};
+/////////////////////////////////////////////////////////////////////
+/////////////////// Function Declarations ///////////////////////////
+void delay_us(int us);
+void delay_ms(int ms);
+
+void LCDwriteCommand(unsigned int cmd);
+void LCDwriteData(char data);
+void LCD_init();
+void LCD_setCursor(unsigned int row, unsigned int col);
+void LCD_displayString(char *str);
+void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
+
+void initNoteSystem(void);
+
+void initialize(void);
+/////////////////////////////////////////////////////////////////////
+/////////////////////// Interrupt Functions /////////////////////////
+
+void DMA_IRQHandler(void){
+    if (DMACIntTCStat & 1){
+        freeBufferFlag = !freeBufferFlag;
+        generatePaused = 0;
+        bufferChanged = 1;
+        DMACIntTCClear = 1;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////
+///////////////////////////// MAIN //////////////////////////////////
+
+int main() {
+    initialize();
+    int n = 0;
+    int prevN = 0;
+    int note = 0;
+    int samplesToGenerate = beats[note] * samplesPerBeat;
+    int f = notes[note];
+    while (1) {
+        if (!generatePaused){
+            if (bufferChanged){ //When buffer is swapped
+                bufferChanged = 0;
+                n = 0;
+            }
+            if (n - prevN >= 4096){ //When current buffer is full
+                prevN = n;
+                generatePaused = 1;
+                continue;
+            }
+
+            if (n >= samplesToGenerate){ //When current note is done generating
+                note++;
+                samplesToGenerate = beats[note] * samplesPerBeat;
+                f = notes[note];
+            }
+            if (freeBufferFlag){
+                buffA[n] = 1023*sin(f * 2.0 * PI * n / SampleRate);
+            } else {
+                buffB[n] = 1023*sin(f * 2.0 * PI * n / SampleRate);
+            }
+            n++;
+        }
+    }
+
+    return 0;
+}
+
+/////////////////////////////////////////////////////////////////////
+/////////////////// Function Definitions ////////////////////////////
+
+void initialize(void){
+    PLL0StartUpSeq(); // Set CPU Clock to 16Mhz
+	LCD_init();
+
+    // Define a custom character 
+    unsigned int quarter[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x1C, 0x1C};
+    LCD_defineCustomChar(0, quarter);
+
+    unsigned int eighth[8]  = {0x06, 0x06, 0x05, 0x05, 0x04, 0x1C, 0x1C, 0x1C};
+    LCD_defineCustomChar(1, eighth);
+
+    unsigned int half[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x14, 0x1C};
+    LCD_defineCustomChar(2, half);
+
+    unsigned int sharp[8] = {0x0A, 0x0A, 0x1F, 0x0A, 0x0A, 0x1F, 0x0A, 0x0A};
+    LCD_defineCustomChar(3, sharp);
+
+    unsigned int flat[8] = {0x10, 0x10, 0x10, 0x16, 0x19, 0x12, 0x14, 0x18};
+    LCD_defineCustomChar(4, flat);
+
+    LLIA1.SrcAddr = (unsigned int) &buffA[0];
+    LLIA1.DestAddr = &DACR;
+    LLIA1.LLI = &LLIA2;
+    LLIA1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
+
+    LLIA2.SrcAddr = (unsigned int) &buffA[2048];
+    LLIA2.DestAddr = &DACR;
+    LLIA2.LLI = &LLIB1;
+    LLIA1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
+
+    LLIB1.SrcAddr = (unsigned int) &buffB[0];
+    LLIB1.DestAddr = &DACR;
+    LLIB1.LLI = &LLIB2;
+    LLIB1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
+
+    LLIB2.SrcAddr = (unsigned int) &buffB[2048];
+    LLIB2.DestAddr = &DACR;
+    LLIB2.LLI = &LLIA1;
+    LLIB1.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26) | (1 << 31);
+
+    initNoteSystem();
+}
 
 // Delay functions
 void delay_us(int us) {
@@ -33,7 +176,7 @@ void LCDwriteCommand(unsigned int cmd) {
     FIO[0].CLR = RW;            // RW = 0 for write
     FIO[0].PIN = (cmd << 3);    // Set DB0-DB7
     FIO[0].SET = EN;            // E = 1 to enable
-    delay_us(100);                       // Short delay for pulse
+    delay_us(10);                       // Short delay for pulse
     FIO[0].CLR = EN;            // E = 0 to latch data
     delay_us(100);                     // Wait for command to complete
 }
@@ -90,35 +233,38 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
     LCDwriteCommand(0x80);             // Return to DDRAM
 }
 
-#define DACR        (*(volatile unsigned int *) 0x4008C000)
-int val;
+void initNoteSystem(void){
+    //Set P0.26 function to AOUT and mode to no pull resistors
+    PINSEL[1] &= ~(3 << 20);
+    PINMODE[1] &= (1 << 21);
+    PINSEL[1] |= (1 << 21);
 
-// Main function
-int main() {
-    PLL0StartUpSeq();				     // Set CPU Clock to 16Mhz
-    initNoteSystem();		    		 // Initialize the note output system.
-	LCD_init();                          // Initialize the LCD
+    //Set PCLK divider to 1 for DAC
+    PCLKSEL0 |= (1 << 22);
 
-    // Define a custom character 
-    unsigned int quarter[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x1C, 0x1C};
-    LCD_defineCustomChar(0, quarter);
+    //Enable DMA Peripheral and enable DMA controller
+    PCONP |= (1 << 29);
+    DMACConfig |= 1;
+    DMACC0.Config &= ~(1u);
 
-    unsigned int eighth[8]  = {0x06, 0x06, 0x05, 0x05, 0x04, 0x1C, 0x1C, 0x1C};
-    LCD_defineCustomChar(1, eighth);
+    //Clear Interrupts for DMACC0
+    DMACIntErrClr = 1;
+    DMACIntTCClear = 1;
 
-    unsigned int half[8] = {0x07, 0x07, 0x04, 0x04, 0x04, 0x1C, 0x14, 0x1C};
-    LCD_defineCustomChar(2, half);
+    DMACC0.SrcAddr = (unsigned int) &buffA[0];
+    DMACC0.DestAddr = (unsigned int) &DACR;
+    DMACC0.Control = transferSize | (1 << 18) | (1 << 21) | (1 << 26);
+    DMACC0.Config =
+        (1) |       //Enable Ch0
+        (7 << 6) |  //DAC Peripheral
+        (1 << 11);  //Memory to Peripheral
+	DMACC0.LLI = (unsigned int) &LLIA2;
+    //Enable DMA Channel 0
+    DMACC0.Config |= 1;
 
-    unsigned int sharp[8] = {0x0A, 0x0A, 0x1F, 0x0A, 0x0A, 0x1F, 0x0A, 0x0A};
-    LCD_defineCustomChar(3, sharp);
+    //Set DMA Counter for DAC
+    DACCNTVAL = PCLK / SampleRate;
 
-    unsigned int flat[8] = {0x10, 0x10, 0x10, 0x16, 0x19, 0x12, 0x14, 0x18};
-    LCD_defineCustomChar(4, flat);
-
-    while (1) {
-    	val = DACR;
-    	//DACR |= 1023 << 6;
-    }
-
-    return 0;
+    //Enable DMA access and DMA counter
+    DACCTRL |= (1 << 2) | (1 << 3);
 }
