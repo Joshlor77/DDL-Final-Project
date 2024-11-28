@@ -10,9 +10,6 @@ Discarded input sections
  .text          0x00000000        0x0 ./src/Clocking.o
  .data          0x00000000        0x0 ./src/Clocking.o
  .bss           0x00000000        0x0 ./src/Clocking.o
- .text.outputClkPin
-                0x00000000       0x48 ./src/Clocking.o
- .group         0x00000000        0xc ./src/FinalProject.o
  .group         0x00000000        0xc ./src/FinalProject.o
  .group         0x00000000        0xc ./src/FinalProject.o
  .group         0x00000000        0xc ./src/FinalProject.o
@@ -21,9 +18,11 @@ Discarded input sections
  .text          0x00000000        0x0 ./src/FinalProject.o
  .data          0x00000000        0x0 ./src/FinalProject.o
  .bss           0x00000000        0x0 ./src/FinalProject.o
- .rodata.samplesPerBeat
+ .rodata.DMACONFIG
                 0x00000000        0x4 ./src/FinalProject.o
- .rodata.numNotes
+ .rodata.DMACONTROL
+                0x00000000        0x4 ./src/FinalProject.o
+ .rodata.samplesPerBeat
                 0x00000000        0x4 ./src/FinalProject.o
  .text.LCD_setCursor
                 0x00000000       0x58 ./src/FinalProject.o
@@ -78,7 +77,7 @@ END GROUP
                 0x20084000                __top_RamAHB32 = 0x20084000
                 0x20084000                __top_RAM2 = 0x20084000
 
-.text           0x00000000     0x6894
+.text           0x00000000     0x57cc
  FILL mask 0xff
                 0x00000000                __vectors_start__ = ABSOLUTE (.)
  *(.isr_vector)
@@ -87,16 +86,16 @@ END GROUP
                 0x000000cc                . = ALIGN (0x4)
                 0x000000cc                __section_table_start = .
                 0x000000cc                __data_section_table = .
-                0x000000cc        0x4 LONG 0x6894 LOADADDR (.data)
+                0x000000cc        0x4 LONG 0x57cc LOADADDR (.data)
                 0x000000d0        0x4 LONG 0x10000000 ADDR (.data)
-                0x000000d4        0x4 LONG 0x30 SIZEOF (.data)
-                0x000000d8        0x4 LONG 0x6894 LOADADDR (.data_RAM2)
+                0x000000d4        0x4 LONG 0x0 SIZEOF (.data)
+                0x000000d8        0x4 LONG 0x57cc LOADADDR (.data_RAM2)
                 0x000000dc        0x4 LONG 0x2007c000 ADDR (.data_RAM2)
                 0x000000e0        0x4 LONG 0x0 SIZEOF (.data_RAM2)
                 0x000000e4                __data_section_table_end = .
                 0x000000e4                __bss_section_table = .
-                0x000000e4        0x4 LONG 0x10000030 ADDR (.bss)
-                0x000000e8        0x4 LONG 0x4030 SIZEOF (.bss)
+                0x000000e4        0x4 LONG 0x10000000 ADDR (.bss)
+                0x000000e8        0x4 LONG 0x4034 SIZEOF (.bss)
                 0x000000ec        0x4 LONG 0x2007c000 ADDR (.bss_RAM2)
                 0x000000f0        0x4 LONG 0x0 SIZEOF (.bss_RAM2)
                 0x000000f4                __bss_section_table_end = .
@@ -165,82 +164,89 @@ END GROUP
  .text.feedSeq  0x00000330       0x28 ./src/Clocking.o
                 0x00000330                feedSeq
  .text.PLL0StartUpSeq
-                0x00000358       0xc4 ./src/Clocking.o
+                0x00000358       0xc0 ./src/Clocking.o
                 0x00000358                PLL0StartUpSeq
+ .text.outputClkPin
+                0x00000418       0x48 ./src/Clocking.o
+                0x00000418                outputClkPin
  .text.DMA_IRQHandler
-                0x0000041c       0x64 ./src/FinalProject.o
-                0x0000041c                DMA_IRQHandler
- .text.main     0x00000480      0x1b0 ./src/FinalProject.o
-                0x00000480                main
+                0x00000460       0x5c ./src/FinalProject.o
+                0x00000460                DMA_IRQHandler
+ .text.main     0x000004bc      0x198 ./src/FinalProject.o
+                0x000004bc                main
  .text.initialize
-                0x00000630      0x114 ./src/FinalProject.o
-                0x00000630                initialize
+                0x00000654      0x158 ./src/FinalProject.o
+                0x00000654                initialize
  .text.delay_us
-                0x00000744       0x44 ./src/FinalProject.o
-                0x00000744                delay_us
+                0x000007ac       0x44 ./src/FinalProject.o
+                0x000007ac                delay_us
  .text.delay_ms
-                0x00000788       0x20 ./src/FinalProject.o
-                0x00000788                delay_ms
+                0x000007f0       0x20 ./src/FinalProject.o
+                0x000007f0                delay_ms
  .text.LCDwriteCommand
-                0x000007a8       0x40 ./src/FinalProject.o
-                0x000007a8                LCDwriteCommand
+                0x00000810       0x40 ./src/FinalProject.o
+                0x00000810                LCDwriteCommand
  .text.LCDwriteData
-                0x000007e8       0x44 ./src/FinalProject.o
-                0x000007e8                LCDwriteData
+                0x00000850       0x44 ./src/FinalProject.o
+                0x00000850                LCDwriteData
  .text.LCD_init
-                0x0000082c       0x40 ./src/FinalProject.o
-                0x0000082c                LCD_init
+                0x00000894       0x40 ./src/FinalProject.o
+                0x00000894                LCD_init
  .text.LCD_defineCustomChar
-                0x0000086c       0x52 ./src/FinalProject.o
-                0x0000086c                LCD_defineCustomChar
- *fill*         0x000008be        0x2 ff
+                0x000008d4       0x52 ./src/FinalProject.o
+                0x000008d4                LCD_defineCustomChar
+ *fill*         0x00000926        0x2 ff
  .text.initNoteSystem
-                0x000008c0       0xc0 ./src/FinalProject.o
-                0x000008c0                initNoteSystem
- .text.setDMABuffA
-                0x00000980       0x58 ./src/FinalProject.o
-                0x00000980                setDMABuffA
- .text.setDMABuffB
-                0x000009d8       0x58 ./src/FinalProject.o
-                0x000009d8                setDMABuffB
+                0x00000928       0xc0 ./src/FinalProject.o
+                0x00000928                initNoteSystem
+ .text.feedDMABuffA
+                0x000009e8       0x4c ./src/FinalProject.o
+                0x000009e8                feedDMABuffA
+ .text.feedDMABuffB
+                0x00000a34       0x4c ./src/FinalProject.o
+                0x00000a34                feedDMABuffB
  .text.__weak_main
-                0x00000a30        0x4 c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
-                0x00000a30                __weak_main
-                0x00000a30                __main
+                0x00000a80        0x4 c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
+                0x00000a80                __weak_main
+                0x00000a80                __main
  *(.rodata .rodata.* .constdata .constdata.*)
- .rodata.lut    0x00000a34     0x5dc0 ./src/FinalProject.o
-                0x00000a34                lut
- .rodata        0x000067f4       0xa0 ./src/FinalProject.o
-                0x00006894                . = ALIGN (0x4)
+ .rodata.lut    0x00000a84     0x4c90 ./src/FinalProject.o
+                0x00000a84                lut
+ .rodata.notes  0x00005714        0xc ./src/FinalProject.o
+                0x00005714                notes
+ .rodata.beats  0x00005720        0xc ./src/FinalProject.o
+                0x00005720                beats
+ .rodata        0x0000572c       0xa0 ./src/FinalProject.o
+                0x000057cc                . = ALIGN (0x4)
 
-.glue_7         0x00006894        0x0
- .glue_7        0x00006894        0x0 linker stubs
+.glue_7         0x000057cc        0x0
+ .glue_7        0x000057cc        0x0 linker stubs
 
-.glue_7t        0x00006894        0x0
- .glue_7t       0x00006894        0x0 linker stubs
+.glue_7t        0x000057cc        0x0
+ .glue_7t       0x000057cc        0x0 linker stubs
 
-.vfp11_veneer   0x00006894        0x0
- .vfp11_veneer  0x00006894        0x0 linker stubs
+.vfp11_veneer   0x000057cc        0x0
+ .vfp11_veneer  0x000057cc        0x0 linker stubs
 
-.v4_bx          0x00006894        0x0
- .v4_bx         0x00006894        0x0 linker stubs
+.v4_bx          0x000057cc        0x0
+ .v4_bx         0x000057cc        0x0 linker stubs
 
-.iplt           0x00006894        0x0
- .iplt          0x00006894        0x0 ./src/Clocking.o
+.iplt           0x000057cc        0x0
+ .iplt          0x000057cc        0x0 ./src/Clocking.o
 
-.rel.dyn        0x00006894        0x0
- .rel.iplt      0x00006894        0x0 ./src/Clocking.o
+.rel.dyn        0x000057cc        0x0
+ .rel.iplt      0x000057cc        0x0 ./src/Clocking.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x00006894        0x0
-                0x00006894                __exidx_start = .
+.ARM.exidx      0x000057cc        0x0
+                0x000057cc                __exidx_start = .
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-                0x00006894                __exidx_end = .
-                0x00006894                _etext = .
+                0x000057cc                __exidx_end = .
+                0x000057cc                _etext = .
 
-.data_RAM2      0x2007c000        0x0 load address 0x00006894
+.data_RAM2      0x2007c000        0x0 load address 0x000057cc
  FILL mask 0xff
                 [!provide]                PROVIDE (__start_data_RAM2 = .)
                 [!provide]                PROVIDE (__start_data_RamAHB32 = .)
@@ -261,7 +267,7 @@ END GROUP
                 0x10000000                . = ALIGN (0x4)
                 0x10000000                _end_uninit_RESERVED = .
 
-.data           0x10000000       0x30 load address 0x00006894
+.data           0x10000000        0x0 load address 0x000057cc
  FILL mask 0xff
                 0x10000000                _data = .
                 [!provide]                PROVIDE (__start_data_RAM = .)
@@ -272,17 +278,13 @@ END GROUP
  *(DataQuickAccess)
  *(RamFunction)
  *(.data*)
- .data.notes    0x10000000       0x18 ./src/FinalProject.o
-                0x10000000                notes
- .data.beats    0x10000018       0x18 ./src/FinalProject.o
-                0x10000018                beats
-                0x10000030                . = ALIGN (0x4)
-                0x10000030                _edata = .
+                0x10000000                . = ALIGN (0x4)
+                0x10000000                _edata = .
                 [!provide]                PROVIDE (__end_data_RAM = .)
                 [!provide]                PROVIDE (__end_data_RamLoc32 = .)
 
-.igot.plt       0x10000030        0x0 load address 0x000068c4
- .igot.plt      0x10000030        0x0 ./src/Clocking.o
+.igot.plt       0x10000000        0x0 load address 0x000057cc
+ .igot.plt      0x10000000        0x0 ./src/Clocking.o
 
 .bss_RAM2       0x2007c000        0x0
                 [!provide]                PROVIDE (__start_bss_RAM2 = .)
@@ -295,34 +297,35 @@ END GROUP
                 [!provide]                PROVIDE (__end_bss_RAM2 = .)
                 [!provide]                PROVIDE (__end_bss_RamAHB32 = .)
 
-.bss            0x10000030     0x4030
-                0x10000030                _bss = .
+.bss            0x10000000     0x4034
+                0x10000000                _bss = .
                 [!provide]                PROVIDE (__start_bss_RAM = .)
                 [!provide]                PROVIDE (__start_bss_RamLoc32 = .)
  *(.bss*)
- .bss.LLIA2     0x10000030       0x10 ./src/FinalProject.o
-                0x10000030                LLIA2
- .bss.LLIB2     0x10000040       0x10 ./src/FinalProject.o
-                0x10000040                LLIB2
- .bss.buffA     0x10000050     0x2000 ./src/FinalProject.o
-                0x10000050                buffA
- .bss.buffB     0x10002050     0x2000 ./src/FinalProject.o
-                0x10002050                buffB
- .bss.freeBufferFlag
-                0x10004050        0x4 ./src/FinalProject.o
-                0x10004050                freeBufferFlag
- .bss.generatePaused
-                0x10004054        0x4 ./src/FinalProject.o
-                0x10004054                generatePaused
- .bss.bufferChanged
-                0x10004058        0x4 ./src/FinalProject.o
-                0x10004058                bufferChanged
- .bss.intCalled
-                0x1000405c        0x4 ./src/FinalProject.o
-                0x1000405c                intCalled
+ .bss.LLIA      0x10000000       0x10 ./src/FinalProject.o
+                0x10000000                LLIA
+ .bss.LLIB      0x10000010       0x10 ./src/FinalProject.o
+                0x10000010                LLIB
+ .bss.buffA     0x10000020     0x2000 ./src/FinalProject.o
+                0x10000020                buffA
+ .bss.buffB     0x10002020     0x2000 ./src/FinalProject.o
+                0x10002020                buffB
+ .bss.unusedBuffer
+                0x10004020        0x4 ./src/FinalProject.o
+                0x10004020                unusedBuffer
+ .bss.pausedGenerate
+                0x10004024        0x4 ./src/FinalProject.o
+                0x10004024                pausedGenerate
+ .bss.changedBuffer
+                0x10004028        0x4 ./src/FinalProject.o
+                0x10004028                changedBuffer
+ .bss.accum     0x1000402c        0x4 ./src/FinalProject.o
+                0x1000402c                accum
+ .bss.delta     0x10004030        0x4 ./src/FinalProject.o
+                0x10004030                delta
  *(COMMON)
-                0x10004060                . = ALIGN (0x4)
-                0x10004060                _ebss = .
+                0x10004034                . = ALIGN (0x4)
+                0x10004034                _ebss = .
                 [!provide]                PROVIDE (__end_bss_RAM = .)
                 [!provide]                PROVIDE (__end_bss_RamLoc32 = .)
                 [!provide]                PROVIDE (end = .)
@@ -338,29 +341,29 @@ END GROUP
                 [!provide]                PROVIDE (__end_noinit_RAM2 = .)
                 [!provide]                PROVIDE (__end_noinit_RamAHB32 = .)
 
-.noinit         0x10004060        0x0
-                0x10004060                _noinit = .
+.noinit         0x10004034        0x0
+                0x10004034                _noinit = .
                 [!provide]                PROVIDE (__start_noinit_RAM = .)
                 [!provide]                PROVIDE (__start_noinit_RamLoc32 = .)
  *(.noinit*)
-                0x10004060                . = ALIGN (0x4)
-                0x10004060                _end_noinit = .
+                0x10004034                . = ALIGN (0x4)
+                0x10004034                _end_noinit = .
                 [!provide]                PROVIDE (__end_noinit_RAM = .)
                 [!provide]                PROVIDE (__end_noinit_RamLoc32 = .)
                 [!provide]                PROVIDE (_pvHeapStart = DEFINED (__user_heap_base)?__user_heap_base:.)
                 0x10008000                PROVIDE (_vStackTop = DEFINED (__user_stack_top)?__user_stack_top:(__top_RamLoc32 - 0x0))
                 0xefff74da                PROVIDE (__valid_user_code_checksum = (0x0 - ((((((_vStackTop + (ResetISR + 0x1)) + (NMI_Handler + 0x1)) + (HardFault_Handler + 0x1)) + (DEFINED (MemManage_Handler)?MemManage_Handler:0x0 + 0x1)) + (DEFINED (BusFault_Handler)?BusFault_Handler:0x0 + 0x1)) + (DEFINED (UsageFault_Handler)?UsageFault_Handler:0x0 + 0x1))))
                 0x00000000                _image_start = LOADADDR (.text)
-                0x000068c4                _image_end = (LOADADDR (.data) + SIZEOF (.data))
-                0x000068c4                _image_size = (_image_end - _image_start)
+                0x000057cc                _image_end = (LOADADDR (.data) + SIZEOF (.data))
+                0x000057cc                _image_size = (_image_end - _image_start)
 OUTPUT(FinalProject.axf elf32-littlearm)
 LOAD linker stubs
 
-.debug_info     0x00000000      0x982
+.debug_info     0x00000000      0x994
  .debug_info    0x00000000       0xb6 ./src/Clocking.o
- .debug_info    0x000000b6      0x60d ./src/FinalProject.o
- .debug_info    0x000006c3      0x27f ./src/cr_startup_lpc175x_6x.o
- .debug_info    0x00000942       0x40 ./src/crp.o
+ .debug_info    0x000000b6      0x61f ./src/FinalProject.o
+ .debug_info    0x000006d5      0x27f ./src/cr_startup_lpc175x_6x.o
+ .debug_info    0x00000954       0x40 ./src/crp.o
 
 .debug_abbrev   0x00000000      0x3d7
  .debug_abbrev  0x00000000       0xa7 ./src/Clocking.o
@@ -383,33 +386,32 @@ LOAD linker stubs
  .debug_ranges  0x00000028       0x78 ./src/FinalProject.o
  .debug_ranges  0x000000a0       0x70 ./src/cr_startup_lpc175x_6x.o
 
-.debug_macro    0x00000000      0xd9f
+.debug_macro    0x00000000      0xcc0
  .debug_macro   0x00000000       0x56 ./src/Clocking.o
  .debug_macro   0x00000056      0xa72 ./src/Clocking.o
  .debug_macro   0x00000ac8       0x1c ./src/Clocking.o
- .debug_macro   0x00000ae4       0xcc ./src/FinalProject.o
- .debug_macro   0x00000bb0       0x8e ./src/FinalProject.o
- .debug_macro   0x00000c3e       0x22 ./src/FinalProject.o
- .debug_macro   0x00000c60       0x10 ./src/FinalProject.o
- .debug_macro   0x00000c70       0xc4 ./src/FinalProject.o
- .debug_macro   0x00000d34       0x1d ./src/cr_startup_lpc175x_6x.o
- .debug_macro   0x00000d51       0x1a ./src/crp.o
- .debug_macro   0x00000d6b       0x34 ./src/crp.o
+ .debug_macro   0x00000ae4       0xb7 ./src/FinalProject.o
+ .debug_macro   0x00000b9b       0x88 ./src/FinalProject.o
+ .debug_macro   0x00000c23       0x22 ./src/FinalProject.o
+ .debug_macro   0x00000c45       0x10 ./src/FinalProject.o
+ .debug_macro   0x00000c55       0x1d ./src/cr_startup_lpc175x_6x.o
+ .debug_macro   0x00000c72       0x1a ./src/crp.o
+ .debug_macro   0x00000c8c       0x34 ./src/crp.o
 
-.debug_line     0x00000000      0x8ab
- .debug_line    0x00000000      0x143 ./src/Clocking.o
- .debug_line    0x00000143      0x558 ./src/FinalProject.o
- .debug_line    0x0000069b      0x15f ./src/cr_startup_lpc175x_6x.o
- .debug_line    0x000007fa       0xb1 ./src/crp.o
+.debug_line     0x00000000      0x7c4
+ .debug_line    0x00000000      0x13e ./src/Clocking.o
+ .debug_line    0x0000013e      0x476 ./src/FinalProject.o
+ .debug_line    0x000005b4      0x15f ./src/cr_startup_lpc175x_6x.o
+ .debug_line    0x00000713       0xb1 ./src/crp.o
 
-.debug_str      0x00000000     0x3fb1
+.debug_str      0x00000000     0x3a42
  .debug_str     0x00000000     0x2f48 ./src/Clocking.o
                                0x2f55 (size before relaxing)
- .debug_str     0x00002f48      0xdbe ./src/FinalProject.o
-                               0x3b39 (size before relaxing)
- .debug_str     0x00003d06      0x1c2 ./src/cr_startup_lpc175x_6x.o
+ .debug_str     0x00002f48      0x84f ./src/FinalProject.o
+                               0x35ca (size before relaxing)
+ .debug_str     0x00003797      0x1c2 ./src/cr_startup_lpc175x_6x.o
                                0x2e91 (size before relaxing)
- .debug_str     0x00003ec8       0xe9 ./src/crp.o
+ .debug_str     0x00003959       0xe9 ./src/crp.o
                                0x2db2 (size before relaxing)
 
 .comment        0x00000000       0x49
@@ -433,10 +435,10 @@ LOAD linker stubs
  .ARM.attributes
                 0x000000b4       0x2d c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 
-.debug_frame    0x00000000      0x400
+.debug_frame    0x00000000      0x3fc
  .debug_frame   0x00000000       0x9c ./src/Clocking.o
- .debug_frame   0x0000009c      0x1f4 ./src/FinalProject.o
- .debug_frame   0x00000290      0x170 ./src/cr_startup_lpc175x_6x.o
+ .debug_frame   0x0000009c      0x1f0 ./src/FinalProject.o
+ .debug_frame   0x0000028c      0x170 ./src/cr_startup_lpc175x_6x.o
 
 Cross Reference Table
 
@@ -447,6 +449,8 @@ BusFault_Handler                                  ./src/cr_startup_lpc175x_6x.o
 CANActivity_IRQHandler                            ./src/cr_startup_lpc175x_6x.o
 CAN_IRQHandler                                    ./src/cr_startup_lpc175x_6x.o
 CRP_WORD                                          ./src/crp.o
+DMACONFIG                                         ./src/FinalProject.o
+DMACONTROL                                        ./src/FinalProject.o
 DMA_IRQHandler                                    ./src/FinalProject.o
 DebugMon_Handler                                  ./src/cr_startup_lpc175x_6x.o
 EINT0_IRQHandler                                  ./src/cr_startup_lpc175x_6x.o
@@ -466,8 +470,8 @@ LCD_init                                          ./src/FinalProject.o
 LCD_setCursor                                     ./src/FinalProject.o
 LCDwriteCommand                                   ./src/FinalProject.o
 LCDwriteData                                      ./src/FinalProject.o
-LLIA2                                             ./src/FinalProject.o
-LLIB2                                             ./src/FinalProject.o
+LLIA                                              ./src/FinalProject.o
+LLIB                                              ./src/FinalProject.o
 MCPWM_IRQHandler                                  ./src/cr_startup_lpc175x_6x.o
 MemManage_Handler                                 ./src/cr_startup_lpc175x_6x.o
 NMI_Handler                                       ./src/cr_startup_lpc175x_6x.o
@@ -506,27 +510,28 @@ __main                                            c:/nxp/mcuxpressoide_11.6.1_82
 __valid_user_code_checksum                        ./src/cr_startup_lpc175x_6x.o
 __weak_main                                       c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 _vStackTop                                        ./src/cr_startup_lpc175x_6x.o
+accum                                             ./src/FinalProject.o
 beats                                             ./src/FinalProject.o
 bss_init                                          ./src/cr_startup_lpc175x_6x.o
 buffA                                             ./src/FinalProject.o
 buffB                                             ./src/FinalProject.o
-bufferChanged                                     ./src/FinalProject.o
+changedBuffer                                     ./src/FinalProject.o
 data_init                                         ./src/cr_startup_lpc175x_6x.o
 delay_ms                                          ./src/FinalProject.o
 delay_us                                          ./src/FinalProject.o
+delta                                             ./src/FinalProject.o
+feedDMABuffA                                      ./src/FinalProject.o
+feedDMABuffB                                      ./src/FinalProject.o
 feedSeq                                           ./src/Clocking.o
-freeBufferFlag                                    ./src/FinalProject.o
 g_pfnVectors                                      ./src/cr_startup_lpc175x_6x.o
-generatePaused                                    ./src/FinalProject.o
 initNoteSystem                                    ./src/FinalProject.o
 initialize                                        ./src/FinalProject.o
-intCalled                                         ./src/FinalProject.o
 lut                                               ./src/FinalProject.o
 main                                              ./src/FinalProject.o
                                                   c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 notes                                             ./src/FinalProject.o
-numNotes                                          ./src/FinalProject.o
 outputClkPin                                      ./src/Clocking.o
+                                                  ./src/FinalProject.o
+pausedGenerate                                    ./src/FinalProject.o
 samplesPerBeat                                    ./src/FinalProject.o
-setDMABuffA                                       ./src/FinalProject.o
-setDMABuffB                                       ./src/FinalProject.o
+unusedBuffer                                      ./src/FinalProject.o

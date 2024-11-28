@@ -49,9 +49,8 @@ void PLL0StartUpSeq(){
 	//PLL Multiplier
 	PLL0CFG &= ~(0x7FFF);
 	feedSeq();
-	unsigned int M = 16;
+	unsigned int M = 18;
 	PLL0CFG |= (M - 1);
-	feedSeq();
 
 	//Enable
 	PLL0CON |= 1;
