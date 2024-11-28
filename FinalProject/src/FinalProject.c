@@ -43,7 +43,7 @@ unsigned short buffB [BuffSize];
 const unsigned int DMACONFIG = (1) | (7 << 6) | (1 << 11)| (3 << 14);
 const unsigned int DMACONTROL = TranSize | (1 << 18) | (1 << 21) | (1 << 26);
 
-int unusedBuffer = 0; // 0 for buffA, 1 for buffB. Indicates which buffer isn't being used by the DMA
+int unusedBuffer = 1; // 0 for buffA, 1 for buffB. Indicates which buffer isn't being used by the DMA
 int pausedGenerate = 0;
 int changedBuffer = 0; //1 when buffer is swapped.
 
@@ -71,12 +71,12 @@ void initialize(void);
 /////////////////////// Interrupt Functions /////////////////////////
 
 void DMA_IRQHandler(void){
-	unusedBuffer = !unusedBuffer;
 	if (unusedBuffer){
-		feedDMABuffB();
-	} else {
 		feedDMABuffA();
+	} else {
+		feedDMABuffB();
 	}
+	unusedBuffer = !unusedBuffer;
 	pausedGenerate = 0;
 	changedBuffer = 1;
 	DMACIntTCClear = 1;
@@ -86,6 +86,7 @@ void DMA_IRQHandler(void){
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
+unsigned int lutFreq;
 unsigned int accum;
 unsigned int delta;
 int main() {
@@ -97,7 +98,7 @@ int main() {
     int samples = beats[note] * samplesPerBeat;
 
     //Accumulator uses Fixed Point. M = 24, N = 8
-    const unsigned int lutFreq = (Fs << 8) / (LUTLength);
+    lutFreq = (Fs << 8) / (LUTLength);
     accum = 0;
     delta = (notes[note] << 16) / lutFreq;
 
@@ -271,7 +272,7 @@ void initNoteSystem(void){
     //Clear Interrupts for DMACC0
     DMACIntErrClr = 1;
     DMACIntTCClear = 1;
-    feedDMABuffB();
+    feedDMABuffA();
 
     //Set DMA Counter for DAC
     DACCNTVAL = PCLK / Fs;

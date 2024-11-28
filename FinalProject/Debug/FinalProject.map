@@ -77,7 +77,7 @@ END GROUP
                 0x20084000                __top_RamAHB32 = 0x20084000
                 0x20084000                __top_RAM2 = 0x20084000
 
-.text           0x00000000     0x57cc
+.text           0x00000000     0x57d8
  FILL mask 0xff
                 0x00000000                __vectors_start__ = ABSOLUTE (.)
  *(.isr_vector)
@@ -86,15 +86,15 @@ END GROUP
                 0x000000cc                . = ALIGN (0x4)
                 0x000000cc                __section_table_start = .
                 0x000000cc                __data_section_table = .
-                0x000000cc        0x4 LONG 0x57cc LOADADDR (.data)
+                0x000000cc        0x4 LONG 0x57d8 LOADADDR (.data)
                 0x000000d0        0x4 LONG 0x10000000 ADDR (.data)
-                0x000000d4        0x4 LONG 0x0 SIZEOF (.data)
-                0x000000d8        0x4 LONG 0x57cc LOADADDR (.data_RAM2)
+                0x000000d4        0x4 LONG 0x4 SIZEOF (.data)
+                0x000000d8        0x4 LONG 0x57d8 LOADADDR (.data_RAM2)
                 0x000000dc        0x4 LONG 0x2007c000 ADDR (.data_RAM2)
                 0x000000e0        0x4 LONG 0x0 SIZEOF (.data_RAM2)
                 0x000000e4                __data_section_table_end = .
                 0x000000e4                __bss_section_table = .
-                0x000000e4        0x4 LONG 0x10000000 ADDR (.bss)
+                0x000000e4        0x4 LONG 0x10000004 ADDR (.bss)
                 0x000000e8        0x4 LONG 0x4034 SIZEOF (.bss)
                 0x000000ec        0x4 LONG 0x2007c000 ADDR (.bss_RAM2)
                 0x000000f0        0x4 LONG 0x0 SIZEOF (.bss_RAM2)
@@ -172,81 +172,81 @@ END GROUP
  .text.DMA_IRQHandler
                 0x00000460       0x5c ./src/FinalProject.o
                 0x00000460                DMA_IRQHandler
- .text.main     0x000004bc      0x198 ./src/FinalProject.o
+ .text.main     0x000004bc      0x1a4 ./src/FinalProject.o
                 0x000004bc                main
  .text.initialize
-                0x00000654      0x158 ./src/FinalProject.o
-                0x00000654                initialize
+                0x00000660      0x158 ./src/FinalProject.o
+                0x00000660                initialize
  .text.delay_us
-                0x000007ac       0x44 ./src/FinalProject.o
-                0x000007ac                delay_us
+                0x000007b8       0x44 ./src/FinalProject.o
+                0x000007b8                delay_us
  .text.delay_ms
-                0x000007f0       0x20 ./src/FinalProject.o
-                0x000007f0                delay_ms
+                0x000007fc       0x20 ./src/FinalProject.o
+                0x000007fc                delay_ms
  .text.LCDwriteCommand
-                0x00000810       0x40 ./src/FinalProject.o
-                0x00000810                LCDwriteCommand
+                0x0000081c       0x40 ./src/FinalProject.o
+                0x0000081c                LCDwriteCommand
  .text.LCDwriteData
-                0x00000850       0x44 ./src/FinalProject.o
-                0x00000850                LCDwriteData
+                0x0000085c       0x44 ./src/FinalProject.o
+                0x0000085c                LCDwriteData
  .text.LCD_init
-                0x00000894       0x40 ./src/FinalProject.o
-                0x00000894                LCD_init
+                0x000008a0       0x40 ./src/FinalProject.o
+                0x000008a0                LCD_init
  .text.LCD_defineCustomChar
-                0x000008d4       0x52 ./src/FinalProject.o
-                0x000008d4                LCD_defineCustomChar
- *fill*         0x00000926        0x2 ff
+                0x000008e0       0x52 ./src/FinalProject.o
+                0x000008e0                LCD_defineCustomChar
+ *fill*         0x00000932        0x2 ff
  .text.initNoteSystem
-                0x00000928       0xc0 ./src/FinalProject.o
-                0x00000928                initNoteSystem
+                0x00000934       0xc0 ./src/FinalProject.o
+                0x00000934                initNoteSystem
  .text.feedDMABuffA
-                0x000009e8       0x4c ./src/FinalProject.o
-                0x000009e8                feedDMABuffA
+                0x000009f4       0x4c ./src/FinalProject.o
+                0x000009f4                feedDMABuffA
  .text.feedDMABuffB
-                0x00000a34       0x4c ./src/FinalProject.o
-                0x00000a34                feedDMABuffB
+                0x00000a40       0x4c ./src/FinalProject.o
+                0x00000a40                feedDMABuffB
  .text.__weak_main
-                0x00000a80        0x4 c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
-                0x00000a80                __weak_main
-                0x00000a80                __main
+                0x00000a8c        0x4 c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
+                0x00000a8c                __weak_main
+                0x00000a8c                __main
  *(.rodata .rodata.* .constdata .constdata.*)
- .rodata.lut    0x00000a84     0x4c90 ./src/FinalProject.o
-                0x00000a84                lut
- .rodata.notes  0x00005714        0xc ./src/FinalProject.o
-                0x00005714                notes
- .rodata.beats  0x00005720        0xc ./src/FinalProject.o
-                0x00005720                beats
- .rodata        0x0000572c       0xa0 ./src/FinalProject.o
-                0x000057cc                . = ALIGN (0x4)
+ .rodata.lut    0x00000a90     0x4c90 ./src/FinalProject.o
+                0x00000a90                lut
+ .rodata.notes  0x00005720        0xc ./src/FinalProject.o
+                0x00005720                notes
+ .rodata.beats  0x0000572c        0xc ./src/FinalProject.o
+                0x0000572c                beats
+ .rodata        0x00005738       0xa0 ./src/FinalProject.o
+                0x000057d8                . = ALIGN (0x4)
 
-.glue_7         0x000057cc        0x0
- .glue_7        0x000057cc        0x0 linker stubs
+.glue_7         0x000057d8        0x0
+ .glue_7        0x000057d8        0x0 linker stubs
 
-.glue_7t        0x000057cc        0x0
- .glue_7t       0x000057cc        0x0 linker stubs
+.glue_7t        0x000057d8        0x0
+ .glue_7t       0x000057d8        0x0 linker stubs
 
-.vfp11_veneer   0x000057cc        0x0
- .vfp11_veneer  0x000057cc        0x0 linker stubs
+.vfp11_veneer   0x000057d8        0x0
+ .vfp11_veneer  0x000057d8        0x0 linker stubs
 
-.v4_bx          0x000057cc        0x0
- .v4_bx         0x000057cc        0x0 linker stubs
+.v4_bx          0x000057d8        0x0
+ .v4_bx         0x000057d8        0x0 linker stubs
 
-.iplt           0x000057cc        0x0
- .iplt          0x000057cc        0x0 ./src/Clocking.o
+.iplt           0x000057d8        0x0
+ .iplt          0x000057d8        0x0 ./src/Clocking.o
 
-.rel.dyn        0x000057cc        0x0
- .rel.iplt      0x000057cc        0x0 ./src/Clocking.o
+.rel.dyn        0x000057d8        0x0
+ .rel.iplt      0x000057d8        0x0 ./src/Clocking.o
 
 .ARM.extab
  *(.ARM.extab* .gnu.linkonce.armextab.*)
 
-.ARM.exidx      0x000057cc        0x0
-                0x000057cc                __exidx_start = .
+.ARM.exidx      0x000057d8        0x0
+                0x000057d8                __exidx_start = .
  *(.ARM.exidx* .gnu.linkonce.armexidx.*)
-                0x000057cc                __exidx_end = .
-                0x000057cc                _etext = .
+                0x000057d8                __exidx_end = .
+                0x000057d8                _etext = .
 
-.data_RAM2      0x2007c000        0x0 load address 0x000057cc
+.data_RAM2      0x2007c000        0x0 load address 0x000057d8
  FILL mask 0xff
                 [!provide]                PROVIDE (__start_data_RAM2 = .)
                 [!provide]                PROVIDE (__start_data_RamAHB32 = .)
@@ -267,7 +267,7 @@ END GROUP
                 0x10000000                . = ALIGN (0x4)
                 0x10000000                _end_uninit_RESERVED = .
 
-.data           0x10000000        0x0 load address 0x000057cc
+.data           0x10000000        0x4 load address 0x000057d8
  FILL mask 0xff
                 0x10000000                _data = .
                 [!provide]                PROVIDE (__start_data_RAM = .)
@@ -278,13 +278,16 @@ END GROUP
  *(DataQuickAccess)
  *(RamFunction)
  *(.data*)
-                0x10000000                . = ALIGN (0x4)
-                0x10000000                _edata = .
+ .data.unusedBuffer
+                0x10000000        0x4 ./src/FinalProject.o
+                0x10000000                unusedBuffer
+                0x10000004                . = ALIGN (0x4)
+                0x10000004                _edata = .
                 [!provide]                PROVIDE (__end_data_RAM = .)
                 [!provide]                PROVIDE (__end_data_RamLoc32 = .)
 
-.igot.plt       0x10000000        0x0 load address 0x000057cc
- .igot.plt      0x10000000        0x0 ./src/Clocking.o
+.igot.plt       0x10000004        0x0 load address 0x000057dc
+ .igot.plt      0x10000004        0x0 ./src/Clocking.o
 
 .bss_RAM2       0x2007c000        0x0
                 [!provide]                PROVIDE (__start_bss_RAM2 = .)
@@ -297,35 +300,34 @@ END GROUP
                 [!provide]                PROVIDE (__end_bss_RAM2 = .)
                 [!provide]                PROVIDE (__end_bss_RamAHB32 = .)
 
-.bss            0x10000000     0x4034
-                0x10000000                _bss = .
+.bss            0x10000004     0x4034
+                0x10000004                _bss = .
                 [!provide]                PROVIDE (__start_bss_RAM = .)
                 [!provide]                PROVIDE (__start_bss_RamLoc32 = .)
  *(.bss*)
- .bss.LLIA      0x10000000       0x10 ./src/FinalProject.o
-                0x10000000                LLIA
- .bss.LLIB      0x10000010       0x10 ./src/FinalProject.o
-                0x10000010                LLIB
- .bss.buffA     0x10000020     0x2000 ./src/FinalProject.o
-                0x10000020                buffA
- .bss.buffB     0x10002020     0x2000 ./src/FinalProject.o
-                0x10002020                buffB
- .bss.unusedBuffer
-                0x10004020        0x4 ./src/FinalProject.o
-                0x10004020                unusedBuffer
+ .bss.LLIA      0x10000004       0x10 ./src/FinalProject.o
+                0x10000004                LLIA
+ .bss.LLIB      0x10000014       0x10 ./src/FinalProject.o
+                0x10000014                LLIB
+ .bss.buffA     0x10000024     0x2000 ./src/FinalProject.o
+                0x10000024                buffA
+ .bss.buffB     0x10002024     0x2000 ./src/FinalProject.o
+                0x10002024                buffB
  .bss.pausedGenerate
                 0x10004024        0x4 ./src/FinalProject.o
                 0x10004024                pausedGenerate
  .bss.changedBuffer
                 0x10004028        0x4 ./src/FinalProject.o
                 0x10004028                changedBuffer
- .bss.accum     0x1000402c        0x4 ./src/FinalProject.o
-                0x1000402c                accum
- .bss.delta     0x10004030        0x4 ./src/FinalProject.o
-                0x10004030                delta
+ .bss.lutFreq   0x1000402c        0x4 ./src/FinalProject.o
+                0x1000402c                lutFreq
+ .bss.accum     0x10004030        0x4 ./src/FinalProject.o
+                0x10004030                accum
+ .bss.delta     0x10004034        0x4 ./src/FinalProject.o
+                0x10004034                delta
  *(COMMON)
-                0x10004034                . = ALIGN (0x4)
-                0x10004034                _ebss = .
+                0x10004038                . = ALIGN (0x4)
+                0x10004038                _ebss = .
                 [!provide]                PROVIDE (__end_bss_RAM = .)
                 [!provide]                PROVIDE (__end_bss_RamLoc32 = .)
                 [!provide]                PROVIDE (end = .)
@@ -341,29 +343,29 @@ END GROUP
                 [!provide]                PROVIDE (__end_noinit_RAM2 = .)
                 [!provide]                PROVIDE (__end_noinit_RamAHB32 = .)
 
-.noinit         0x10004034        0x0
-                0x10004034                _noinit = .
+.noinit         0x10004038        0x0
+                0x10004038                _noinit = .
                 [!provide]                PROVIDE (__start_noinit_RAM = .)
                 [!provide]                PROVIDE (__start_noinit_RamLoc32 = .)
  *(.noinit*)
-                0x10004034                . = ALIGN (0x4)
-                0x10004034                _end_noinit = .
+                0x10004038                . = ALIGN (0x4)
+                0x10004038                _end_noinit = .
                 [!provide]                PROVIDE (__end_noinit_RAM = .)
                 [!provide]                PROVIDE (__end_noinit_RamLoc32 = .)
                 [!provide]                PROVIDE (_pvHeapStart = DEFINED (__user_heap_base)?__user_heap_base:.)
                 0x10008000                PROVIDE (_vStackTop = DEFINED (__user_stack_top)?__user_stack_top:(__top_RamLoc32 - 0x0))
                 0xefff74da                PROVIDE (__valid_user_code_checksum = (0x0 - ((((((_vStackTop + (ResetISR + 0x1)) + (NMI_Handler + 0x1)) + (HardFault_Handler + 0x1)) + (DEFINED (MemManage_Handler)?MemManage_Handler:0x0 + 0x1)) + (DEFINED (BusFault_Handler)?BusFault_Handler:0x0 + 0x1)) + (DEFINED (UsageFault_Handler)?UsageFault_Handler:0x0 + 0x1))))
                 0x00000000                _image_start = LOADADDR (.text)
-                0x000057cc                _image_end = (LOADADDR (.data) + SIZEOF (.data))
-                0x000057cc                _image_size = (_image_end - _image_start)
+                0x000057dc                _image_end = (LOADADDR (.data) + SIZEOF (.data))
+                0x000057dc                _image_size = (_image_end - _image_start)
 OUTPUT(FinalProject.axf elf32-littlearm)
 LOAD linker stubs
 
-.debug_info     0x00000000      0x994
+.debug_info     0x00000000      0x997
  .debug_info    0x00000000       0xb6 ./src/Clocking.o
- .debug_info    0x000000b6      0x61f ./src/FinalProject.o
- .debug_info    0x000006d5      0x27f ./src/cr_startup_lpc175x_6x.o
- .debug_info    0x00000954       0x40 ./src/crp.o
+ .debug_info    0x000000b6      0x622 ./src/FinalProject.o
+ .debug_info    0x000006d8      0x27f ./src/cr_startup_lpc175x_6x.o
+ .debug_info    0x00000957       0x40 ./src/crp.o
 
 .debug_abbrev   0x00000000      0x3d7
  .debug_abbrev  0x00000000       0xa7 ./src/Clocking.o
@@ -527,6 +529,7 @@ g_pfnVectors                                      ./src/cr_startup_lpc175x_6x.o
 initNoteSystem                                    ./src/FinalProject.o
 initialize                                        ./src/FinalProject.o
 lut                                               ./src/FinalProject.o
+lutFreq                                           ./src/FinalProject.o
 main                                              ./src/FinalProject.o
                                                   c:/nxp/mcuxpressoide_11.6.1_8255/ide/plugins/com.nxp.mcuxpresso.tools.win32_11.6.1.202207200623/tools/bin/../lib/gcc/arm-none-eabi/10.3.1/../../../../arm-none-eabi/lib/thumb/v7-m/nofp\libcr_c.a(__weak__main.o)
 notes                                             ./src/FinalProject.o
