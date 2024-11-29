@@ -20,15 +20,15 @@
 #define ISER0 	(*(volatile unsigned int *) 0xE000E100)
 #define PSEL0   (*(volatile unsigned int *) 0x400FC1A8)
 
-#define AUDIOBUFFSIZE   4096
+#define AUDIOBUFFSIZE   2048
 #define BPM             112
 #define Fs  		    48000 //Hz Output Sample Rate
 #define PCLK            18 // MHz, PCLK = CLK. PCLK selected to divide evenly with Fs
 
 //Fixed Point MACROS for M = 24, N = 8
 #define FPSCALE         8
-#define INTtoFP(x)      ((x) << FPSCALE)
-#define FPtoINT(x)      ((x) >> FPSCALE)
+#define INTtoFP(x)      ((x) >> FPSCALE)
+#define FPtoINT(x)      ((x) << FPSCALE)
 #define FPWHOLE(x)      ((x) & 0xFFFFFF00)
 #define FPFRACT(x)      ((x) & 0x000000FF)
 #define FPDIV(x, y)     (((x) << FPSCALE) / (y))
@@ -50,44 +50,72 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 unsigned int linearInterpolate(unsigned int y2, unsigned int y1, unsigned int frac);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
-unsigned short audBuff [AUDIOBUFFSIZE];
-int audBuffIdxR;
-int audBuffIdxW;
+unsigned short audBuffA [AUDIOBUFFSIZE];
+unsigned short audBuffB [AUDIOBUFFSIZE];
+volatile int audBuffIdxR;
+volatile int audBuffIdxW;
+enum BufferID{
+	BufferAID,
+	BufferBID
+};
+enum BufferID readBuffer;
 
-const int FsCount = (PCLK * 1000000) / Fs;
-const int samplesPerBeat = (Fs * 60) / BPM;
+int FsCount = (PCLK * 1000000) / Fs;
+int samplesPerBeat = (Fs * 60) / BPM;
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
+int temp;
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
-        if (((audBuffIdxR + 1) % AUDIOBUFFSIZE) != audBuffIdxW){ //Buffer not empty
-            DACR = audBuff[audBuffIdxR];
-            audBuffIdxR = (audBuffIdxR + 1) % AUDIOBUFFSIZE;
-        }
+    	if (readBuffer == BufferAID){
+            DACR = audBuffA[audBuffIdxR++];
+    	}
+    	if (readBuffer == BufferBID){
+            DACR = audBuffA[audBuffIdxR++];
+    	}
         T0.MR[0] += FsCount;
         T0.IR = 1;
+        if (audBuffIdxR >= AUDIOBUFFSIZE){
+        	audBuffIdxR = 0;
+        	audBuffIdxW = 0;
+        	if (readBuffer == BufferAID){
+        		readBuffer = BufferBID;
+        	} else {
+        		readBuffer = BufferAID;
+        	}
+        }
     }
 }
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
+unsigned int accum;
+unsigned int delta;
+unsigned int sample;
 
 int main() {
     initialize();
     
     const int notes [] = {500, -1};
     const int beats [] = {300, -1};
-    const int numNotes = sizeof(notes) / sizeof(notes[0]);
     const unsigned int lutFs = FPDIV(INTtoFP(Fs), INTtoFP(sizeof(lut) / sizeof(lut[0])));
+    const int lutSize = sizeof(lut) / sizeof(lut[0]);
 
     int note = 0;
     int samples = beats[note] * samplesPerBeat;
-    int sample = 0;
+    sample = 0;
     
-    unsigned int accum = 0;
-    unsigned int delta = FPDIV(INTtoFP(notes[note]), lutFs);
+    accum = 0;
+    delta = FPDIV(INTtoFP(notes[note]), lutFs);
+
     while (1) {
-        if (((audBuffIdxW + 1) % AUDIOBUFFSIZE) != audBuffIdxR){ //Buffer not full
-            audBuff[audBuffIdxW] = linearInterpolate(lut[(FPtoINT(accum) + 1) % AUDIOBUFFSIZE], lut[FPtoINT(accum) % AUDIOBUFFSIZE], FPFRACT(accum));       
+        if (audBuffIdxW < AUDIOBUFFSIZE){
+            //audBuff[audBuffIdxW] = linearInterpolate(lut[(FPtoINT(accum) + 1) % AUDIOBUFFSIZE], lut[FPtoINT(accum) % AUDIOBUFFSIZE], FPFRACT(accum));
+            if (readBuffer == BufferAID){
+            	audBuffB[audBuffIdxW] = lut[INTtoFP(accum) % lutSize] << 6;
+            }
+            if (readBuffer == BufferBID){
+            	audBuffA[audBuffIdxW] = lut[INTtoFP(accum) % lutSize] << 6;
+            }
             accum += delta;
             sample++; audBuffIdxW++;
             if (sample >= samples){ //Finished generating samples for current note
@@ -121,25 +149,26 @@ void initialize(void){
     unsigned int flat[8] = {0x10, 0x10, 0x10, 0x16, 0x19, 0x12, 0x14, 0x18};
     LCD_defineCustomChar(4, flat);
 
-    for (int i = 0; i < sizeof(audBuff) / sizeof(audBuff[0]); i++){
-        audBuff[i] = 0;
+    for (int i = 0; i < sizeof(audBuffA) / sizeof(audBuffA[0]); i++){
+        audBuffA[i] = 0;
+        audBuffB[i] = 0;
     }    
     audBuffIdxR = 0;
-    audBuffIdxW = AUDIOBUFFSIZE / 2;
+
 
     //Set P0.26 function to AOUT and mode to no pull resistors
     PINSEL[1] &= ~(3 << 20);
     PINMODE[1] &= (1 << 21);
     PINSEL[1] |= (1 << 21);
 
-    PSEL0 |= (1 << 2);	  //Timer0 PCLK = CCLK
-    T0.IR = 0xF;          //Clear MR Interupt flags
-    T0.TCR |= 1;          //Enable Timer0 counter
-    ISER0 = (1 << 1);     //Enable Timer0 interrupts
-    
     //Enable Timer0 Match Register Channel 0
-    T0.MCR |= (1 << 3);
     T0.MR[0] = T0.TC + FsCount;
+    T0.MCR |= 1;
+
+    PCLKSEL0 |= (1 << 2);	//Timer0 PCLK = CCLK
+    T0.IR = 0xF;          	//Clear MR Interupt flags
+    T0.TCR |= 1;          	//Enable Timer0 counter
+    ISER0 = (1 << 1);     	//Enable Timer0 interrupts
 }
 
 // Delay functions
