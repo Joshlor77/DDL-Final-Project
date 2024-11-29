@@ -1,4 +1,4 @@
-#include "DMA_DAC_DEF.h"
+#include "DAC.h"
 #include "Clocking.h"
 #include "Timer.h"
 #include "FIO.h"
@@ -17,39 +17,21 @@
 #define D6 (1<<9)  // DB6 pin connected to P0.9
 #define D7 (1<<10) // DB7 pin connected to P0.10
 
-#define DACR        (*(volatile unsigned int *) 0x4008C000)
 #define ISER0 		(*(volatile unsigned int *) 0xE000E100)
 
-#define PI          3.141592653589793238462643383279
 #define BuffSize	4096
-#define TranSize 	2047
-
-#define NoteLength	2
-#define BBPM        112
-#define Fs  		48000 //Hz Sample Rate
-#define PCLK        18000000 // Hz for DAC
+#define BPM         112
+#define Fs  		44100 //Hz Output Sample Rate
+#define PCLK        16 // MHz
 
 ////////////////////// Global Variables /////////////////////////////
-typedef struct {
-    unsigned int SrcAddr;
-    unsigned int DestAddr;
-    unsigned int LLI;
-    unsigned int Control;
-} LLI;
-LLI LLIA;
-LLI LLIB;
-unsigned short buffA [BuffSize];
-unsigned short buffB [BuffSize];
-const unsigned int DMACONFIG = (1) | (7 << 6) | (1 << 11)| (3 << 14);
-const unsigned int DMACONTROL = TranSize | (1 << 18) | (1 << 21) | (1 << 26);
 
-int unusedBuffer = 1; // 0 for buffA, 1 for buffB. Indicates which buffer isn't being used by the DMA
-int pausedGenerate = 0;
-int changedBuffer = 0; //1 when buffer is swapped.
+unsigned short audioBuff [BuffSize];
+int audioBuffIdx;
 
-const int samplesPerBeat = (Fs * 60) / BBPM;
-const int notes [NoteLength + 1] = {500, -1};
-const int beats [NoteLength + 1] = {300, -1};
+const int samplesPerBeat = (Fs * 60) / BPM;
+const int notes [] = {500, -1};
+const int beats [] = {300, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////// Function Declarations ///////////////////////////
 void delay_us(int us);
@@ -62,77 +44,18 @@ void LCD_setCursor(unsigned int row, unsigned int col);
 void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
-void initNoteSystem(void);
-void feedDMABuffA(void);
-void feedDMABuffB(void);
-
 void initialize(void);
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 
-void DMA_IRQHandler(void){
-	if (unusedBuffer){
-		feedDMABuffA();
-	} else {
-		feedDMABuffB();
-	}
-	unusedBuffer = !unusedBuffer;
-	pausedGenerate = 0;
-	changedBuffer = 1;
-	DMACIntTCClear = 1;
-	DMACIntErrClr = 1;
-}
 
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
-unsigned int lutFreq;
-unsigned int accum;
-unsigned int delta;
 int main() {
     initialize();
-    outputClkPin();
-
-    //Variables for note generation
-    int n = 0, note = 0, sample = 0;
-    int samples = beats[note] * samplesPerBeat;
-
-    //Accumulator uses Fixed Point. M = 24, N = 8
-    lutFreq = (Fs << 8) / (LUTLength);
-    accum = 0;
-    delta = (notes[note] << 16) / lutFreq;
 
     while (1) {
-        if (!pausedGenerate){
-            if (changedBuffer){ //When	 buffer is swapped
-                changedBuffer = 0;
-                n = 0;
-            }
-            if (n >= BuffSize){ //When current buffer is full
-                pausedGenerate = 1;
-                continue;
-            }
-            if (sample >= samples){ //When current note is done generating
-                note++;
-                if (notes[note] == -1){
-                	note = 0;
-                }
-                sample = 0;
-                samples = beats[note] * samplesPerBeat;
-                delta = (notes[note] << 16) / lutFreq;
-            }
-            if (unusedBuffer){
-                buffA[n] = lut[(accum >> 8) % LUTLength];
-                accum = (accum + delta);
-                buffA[n] = buffA[n] << 6;
-            } else {
-                buffB[n] = lut[(accum >> 8) % LUTLength];
-                accum = (accum + delta);
-                buffB[n] = buffB[n] << 6;
-            }
-            n++;
-            sample++;
-        }
 
     }
 
@@ -162,22 +85,12 @@ void initialize(void){
     unsigned int flat[8] = {0x10, 0x10, 0x10, 0x16, 0x19, 0x12, 0x14, 0x18};
     LCD_defineCustomChar(4, flat);
 
-    for (int i = 0; i < 4096; i++){
-    	buffA[i] = 0;
-    	buffB[i] = 0;
-    }
+    //Set P0.26 function to AOUT and mode to no pull resistors
+    PINSEL[1] &= ~(3 << 20);
+    PINMODE[1] &= (1 << 21);
+    PINSEL[1] |= (1 << 21);
 
-    LLIA.SrcAddr = (unsigned int) &buffA[2048];
-    LLIA.DestAddr = (unsigned int) &DACR;
-    LLIA.LLI = (unsigned int) 0;
-    LLIA.Control = DMACONTROL | (1u << 31);
-
-    LLIB.SrcAddr = (unsigned int) &buffB[2048];
-    LLIB.DestAddr = (unsigned int) &DACR;
-    LLIB.LLI = (unsigned int) 0;
-    LLIB.Control = DMACONTROL | (1u << 31);
-
-    initNoteSystem();
+    //
 }
 
 // Delay functions
@@ -252,55 +165,4 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
         LCDwriteData(pattern[i]);      // Write each row of the pattern
     }
     LCDwriteCommand(0x80);             // Return to DDRAM
-}
-
-void initNoteSystem(void){
-    //Set P0.26 function to AOUT and mode to no pull resistors
-    PINSEL[1] &= ~(3 << 20);
-    PINMODE[1] &= (1 << 21);
-    PINSEL[1] |= (1 << 21);
-
-    //Set PCLK divider to 1 for DAC
-    PCLKSEL0 |= (1 << 22);
-
-    //Enable DMA Peripheral, enable DMA controller, disable Channel 0
-    PCONP |= (1 << 29);
-    DACCTRL = ~0xFu;
-    DMACConfig |= 1;
-    DMACC0.Config &= ~(1u);
-
-    //Clear Interrupts for DMACC0
-    DMACIntErrClr = 1;
-    DMACIntTCClear = 1;
-    feedDMABuffA();
-
-    //Set DMA Counter for DAC
-    DACCNTVAL = PCLK / Fs;
-
-    //Enable Interrupts
-    ISER0 |= (1 << 26);
-
-    //Enable DMA access and DMA counter
-    DACCTRL |= (1 << 2) | (1 << 3);
-
-}
-
-//Make sure to disable the DMACC0 before programming it to avoid any issues
-void feedDMABuffA(void){
-    DMACC0.Config &= ~1u;
-    DMACC0.SrcAddr = (unsigned int) &buffA[0];
-    DMACC0.DestAddr = (unsigned int) &DACR;
-    DMACC0.Control = DMACONTROL;
-	DMACC0.LLI = (unsigned int) &LLIA;
-    DMACC0.Config = DMACONFIG;
-}
-
-//Make sure to disable the DMACC0 before programming it to avoid any issues
-void feedDMABuffB(void){
-    DMACC0.Config &= ~1u;
-    DMACC0.SrcAddr = (unsigned int) &buffB[0];
-    DMACC0.DestAddr = (unsigned int) &DACR;
-    DMACC0.Control = DMACONTROL;
-	DMACC0.LLI = (unsigned int) &LLIB;
-    DMACC0.Config = DMACONFIG;
 }
