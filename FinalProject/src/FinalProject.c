@@ -84,7 +84,7 @@ void TIMER0_IRQHandler(void){
 unsigned int accum;
 unsigned int delta;
 unsigned int sample;
-
+unsigned int lutFreq;
 int main() {
     initialize();
     
@@ -92,29 +92,29 @@ int main() {
     const int beats [] = {300, -1};
 
     int lutSize = sizeof(lut) / sizeof(lut[0]);
-    unsigned int lutFreq = PCLK / Fs;
+    lutFreq = Fs / lutSize;
 
     int note = 0;
     int samples = beats[note] * samplesPerBeat;
     sample = 0;
     
     accum = 0;
-    delta = (notes[note] << 16) / lutFreq;
+    delta = notes[note] / lutFreq;
 
     while (1) {
         if (audBuffIdxW < AUDIOBUFFSIZE){
             //audBuff[audBuffIdxW] = linearInterpolate(lut[(FPtoINT(accum) + 1) % AUDIOBUFFSIZE], lut[FPtoINT(accum) % AUDIOBUFFSIZE], FPFRACT(accum));
             if (readBuffer == BufferAID){
-            	audBuffB[audBuffIdxW] = lut[(accum >> FPSCALE) % lutSize] << 6;
+            	audBuffB[audBuffIdxW] = lut[accum % lutSize] << 6;
             }
             if (readBuffer == BufferBID){
-            	audBuffA[audBuffIdxW] = lut[(accum >> FPSCALE) % lutSize] << 6;
+            	audBuffA[audBuffIdxW] = lut[accum % lutSize] << 6;
             }
             accum += delta;
             sample++; audBuffIdxW++;
             if (sample >= samples){ //Finished generating samples for current note
                 note++;
-                delta = (notes[note] << 16) / lutFreq;
+                delta = notes[note] / lutFreq;
             }
         }
     }
