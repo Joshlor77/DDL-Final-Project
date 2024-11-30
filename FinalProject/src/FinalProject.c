@@ -20,8 +20,9 @@
 #define PSEL0   (*(volatile unsigned int *) 0x400FC1A8)
 
 #define BPM             112
-#define PCLK            16 	// MHz
+#define PCLKT0            16 	// MHz
 #define DACMAXIMUM		1023
+
 
 /////////////////// Function Declarations ///////////////////////////
 void initialize(void);
@@ -37,6 +38,7 @@ void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
 int countValue(int Frequency);
+int 
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
 typedef struct{
@@ -49,11 +51,25 @@ typedef struct{
 OutData outData;
 
 enum Note {
-	Sixteenth	= (PCLK * 1000000 * 60) / (BPM * 4),
-	Eight 		= (PCLK * 1000000 * 60) / (BPM * 2),
-	Quarter 	= (PCLK * 1000000 * 60) / BPM,
-	Half		= (PCLK * 1000000 * 60 * 2) / BPM,
-	Whole		= ((PCLK * 1000000 * 60) / BPM) * 4
+	Sixteenth	= (PCLKT0 * 1000000 * 60) / (BPM * 4),
+	Eight 		= (PCLKT0 * 1000000 * 60) / (BPM * 2),
+	Quarter 	= (PCLKT0 * 1000000 * 60) / BPM,
+	Half		= (PCLKT0 * 1000000 * 60 * 2) / BPM,
+	Whole		= ((PCLKT0 * 1000000 * 60) / BPM) * 4
+};
+
+typedef struct{
+    float aTime; float aCurve;
+    float dTime; float dCurve;
+    float sTime; float sHeight;
+    float rTime; float rCurve;
+} ADSR;
+
+ADSR adsr = (ADSR) {
+    .aTime = 0.5,   .aCurve = -1,
+    .dTime = 0.3,   .dCurve = -1,
+    .sTime = 0.65,  .sHeight = 0.6,
+    .rTime = 0.4,   .rCurve = -0.16
 };
 
 int goNextNote = 0;
@@ -139,7 +155,7 @@ void initialize(void){
     T0.MR[1] = T0.TC + outData.beatTime;
     T0.MCR |= 1 << 3;
 
-    PCLKSEL0 |= (1 << 2);	//Timer0 PCLK = CCLK
+    PCLKSEL0 |= (1 << 2);	//Timer0 PCLKT0 = CCLK
     T0.IR = 0xF;          	//Clear MR Interupt flags
     T0.TCR |= 1;          	//Enable Timer0 counter
     ISER0 = (1 << 1);     	//Enable Timer0 interrupts
@@ -147,7 +163,7 @@ void initialize(void){
 
 // Delay functions
 void delay_us(int us) {
-	int value = us * PCLK;
+	int value = us * PCLKT0;
 	int start = T0.TC; // note starting time
 	T0.TCR |= (1<<0); // start timer
 	while ((T0.TC-start)<value) {} // wait for time to pass
@@ -221,5 +237,5 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
 
 //Returns the count value necessary for 50% duty cycle for a particular frequency.
 int countValue(int Frequency){
-	return (PCLK * 1000000) / (2 * Frequency);
+	return (PCLKT0 * 1000000) / (2 * Frequency);
 }
