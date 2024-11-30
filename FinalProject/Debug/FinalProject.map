@@ -25,7 +25,7 @@ Discarded input sections
  .text.LCD_displayString
                 0x00000000       0x2a ./src/FinalProject.o
  .text.linearInterpolate
-                0x00000000       0x2c ./src/FinalProject.o
+                0x00000000       0x26 ./src/FinalProject.o
  .debug_macro   0x00000000      0xa72 ./src/FinalProject.o
  .debug_macro   0x00000000       0x1c ./src/FinalProject.o
  .group         0x00000000        0xc ./src/cr_startup_lpc175x_6x.o
@@ -346,11 +346,11 @@ END GROUP
 OUTPUT(FinalProject.axf elf32-littlearm)
 LOAD linker stubs
 
-.debug_info     0x00000000      0x90e
+.debug_info     0x00000000      0x909
  .debug_info    0x00000000       0xb6 ./src/Clocking.o
- .debug_info    0x000000b6      0x599 ./src/FinalProject.o
- .debug_info    0x0000064f      0x27f ./src/cr_startup_lpc175x_6x.o
- .debug_info    0x000008ce       0x40 ./src/crp.o
+ .debug_info    0x000000b6      0x594 ./src/FinalProject.o
+ .debug_info    0x0000064a      0x27f ./src/cr_startup_lpc175x_6x.o
+ .debug_info    0x000008c9       0x40 ./src/crp.o
 
 .debug_abbrev   0x00000000      0x3c8
  .debug_abbrev  0x00000000       0xa7 ./src/Clocking.o
@@ -373,31 +373,31 @@ LOAD linker stubs
  .debug_ranges  0x00000028       0x68 ./src/FinalProject.o
  .debug_ranges  0x00000090       0x70 ./src/cr_startup_lpc175x_6x.o
 
-.debug_macro    0x00000000      0xc69
+.debug_macro    0x00000000      0xc45
  .debug_macro   0x00000000       0x56 ./src/Clocking.o
  .debug_macro   0x00000056      0xa72 ./src/Clocking.o
  .debug_macro   0x00000ac8       0x1c ./src/Clocking.o
- .debug_macro   0x00000ae4       0xd0 ./src/FinalProject.o
- .debug_macro   0x00000bb4       0x28 ./src/FinalProject.o
- .debug_macro   0x00000bdc       0x22 ./src/FinalProject.o
- .debug_macro   0x00000bfe       0x1d ./src/cr_startup_lpc175x_6x.o
- .debug_macro   0x00000c1b       0x1a ./src/crp.o
- .debug_macro   0x00000c35       0x34 ./src/crp.o
+ .debug_macro   0x00000ae4       0xac ./src/FinalProject.o
+ .debug_macro   0x00000b90       0x28 ./src/FinalProject.o
+ .debug_macro   0x00000bb8       0x22 ./src/FinalProject.o
+ .debug_macro   0x00000bda       0x1d ./src/cr_startup_lpc175x_6x.o
+ .debug_macro   0x00000bf7       0x1a ./src/crp.o
+ .debug_macro   0x00000c11       0x34 ./src/crp.o
 
-.debug_line     0x00000000      0x71b
+.debug_line     0x00000000      0x729
  .debug_line    0x00000000      0x13e ./src/Clocking.o
- .debug_line    0x0000013e      0x3cd ./src/FinalProject.o
- .debug_line    0x0000050b      0x15f ./src/cr_startup_lpc175x_6x.o
- .debug_line    0x0000066a       0xb1 ./src/crp.o
+ .debug_line    0x0000013e      0x3db ./src/FinalProject.o
+ .debug_line    0x00000519      0x15f ./src/cr_startup_lpc175x_6x.o
+ .debug_line    0x00000678       0xb1 ./src/crp.o
 
-.debug_str      0x00000000     0x3766
+.debug_str      0x00000000     0x36a6
  .debug_str     0x00000000     0x2f48 ./src/Clocking.o
                                0x2f55 (size before relaxing)
- .debug_str     0x00002f48      0x573 ./src/FinalProject.o
-                               0x32fc (size before relaxing)
- .debug_str     0x000034bb      0x1c2 ./src/cr_startup_lpc175x_6x.o
+ .debug_str     0x00002f48      0x4b3 ./src/FinalProject.o
+                               0x323c (size before relaxing)
+ .debug_str     0x000033fb      0x1c2 ./src/cr_startup_lpc175x_6x.o
                                0x2e91 (size before relaxing)
- .debug_str     0x0000367d       0xe9 ./src/crp.o
+ .debug_str     0x000035bd       0xe9 ./src/crp.o
                                0x2db2 (size before relaxing)
 
 .comment        0x00000000       0x49

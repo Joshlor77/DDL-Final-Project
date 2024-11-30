@@ -25,14 +25,7 @@
 #define Fs  		    48000 //Hz Output Sample Rate
 #define PCLK            18 // MHz, PCLK = CLK. PCLK selected to divide evenly with Fs
 
-//Fixed Point MACROS for M = 24, N = 8
 #define FPSCALE         8
-#define INTtoFP(x)      ((x) >> FPSCALE)
-#define FPtoINT(x)      ((x) << FPSCALE)
-#define FPWHOLE(x)      ((x) & 0xFFFFFF00)
-#define FPFRACT(x)      ((x) & 0x000000FF)
-#define FPDIV(x, y)     (((x) << FPSCALE) / (y))
-#define FPMUL(x, y)     (((x) >> 2) * ((y) >> 2) >> 4)
 
 /////////////////// Function Declarations ///////////////////////////
 void initialize(void);
@@ -97,30 +90,31 @@ int main() {
     
     const int notes [] = {500, -1};
     const int beats [] = {300, -1};
-    const unsigned int lutFs = FPDIV(INTtoFP(Fs), INTtoFP(sizeof(lut) / sizeof(lut[0])));
-    const int lutSize = sizeof(lut) / sizeof(lut[0]);
+
+    int lutSize = sizeof(lut) / sizeof(lut[0]);
+    unsigned int lutFreq = PCLK / Fs;
 
     int note = 0;
     int samples = beats[note] * samplesPerBeat;
     sample = 0;
     
     accum = 0;
-    delta = FPDIV(INTtoFP(notes[note]), lutFs);
+    delta = (notes[note] << 16) / lutFreq;
 
     while (1) {
         if (audBuffIdxW < AUDIOBUFFSIZE){
             //audBuff[audBuffIdxW] = linearInterpolate(lut[(FPtoINT(accum) + 1) % AUDIOBUFFSIZE], lut[FPtoINT(accum) % AUDIOBUFFSIZE], FPFRACT(accum));
             if (readBuffer == BufferAID){
-            	audBuffB[audBuffIdxW] = lut[INTtoFP(accum) % lutSize] << 6;
+            	audBuffB[audBuffIdxW] = lut[(accum >> FPSCALE) % lutSize] << 6;
             }
             if (readBuffer == BufferBID){
-            	audBuffA[audBuffIdxW] = lut[INTtoFP(accum) % lutSize] << 6;
+            	audBuffA[audBuffIdxW] = lut[(accum >> FPSCALE) % lutSize] << 6;
             }
             accum += delta;
             sample++; audBuffIdxW++;
             if (sample >= samples){ //Finished generating samples for current note
                 note++;
-                delta = FPDIV(INTtoFP(notes[note]), lutFs);
+                delta = (notes[note] << 16) / lutFreq;
             }
         }
     }
@@ -247,5 +241,6 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
 
 //Fixed Point Linear Interpolation, Inputs should already be a fixed point with the FP scale in the define
 unsigned inline int linearInterpolate(unsigned int y2, unsigned int y1, unsigned int fract){
-    return  y2 + FPMUL((y2 - y1),fract);
+    return  y2 + fract * ((y2 - y1) >> 8);
 }
+
