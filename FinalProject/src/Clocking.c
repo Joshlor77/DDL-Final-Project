@@ -1,6 +1,6 @@
 #include "FIO.h"
 
-/* Sets the CCLK to 18Mhz
+/* Sets the CCLK to 16Mhz
  *
  */
 

@@ -36,42 +36,72 @@ void LCD_setCursor(unsigned int row, unsigned int col);
 void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
+int countValue(int Frequency);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
+typedef struct{
+	int val;
+	int state;
+	int highTime;
+	int lowTime;
+	int beatTime;
+} OutData;
+OutData outData;
 
+enum Note {
+	Sixteenth	= (PCLK * 1000000 * 60) / (BPM * 4),
+	Eight 		= (PCLK * 1000000 * 60) / (BPM * 2),
+	Quarter 	= (PCLK * 1000000 * 60) / BPM,
+	Half		= (PCLK * 1000000 * 60 * 2) / BPM,
+	Whole		= ((PCLK * 1000000 * 60) / BPM) * 4
+};
+
+int goNextNote = 0;
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
-int DACVAL = 512 << 6;
-int countVal = 500;
-int on = 0;
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
-    	if (on){
-    		DACR = DACVAL;
-    		on = 0;
+    	if (outData.state){
+    		DACR = outData.val << 6;
+    		outData.state = 0;
+    		T0.MR[0] += outData.highTime;
     	} else {
         	DACR = 0;
-        	on = 1;
+        	outData.state = 1;
+    		T0.MR[0] += outData.lowTime;
     	}
-        T0.MR[0] += countVal;
         T0.IR = 1;
+    }
+    if (T0.IR & 2){
+    	goNextNote = 1;
+    	T0.MR[1] += outData.beatTime;
+    	T0.IR = 2;
     }
 }
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
-
-int i;
 int main() {
-    initialize();
-    
-    const int notes [] = {500, -1};
-    const int beats [] = {300, -1};
+    const int notes [] = {440, 880, 1760, -1};
+    const int beats [] = {Sixteenth, Sixteenth, Sixteenth, -1};
     int note = 0;
+    outData.beatTime = beats[note];
+    outData.highTime = countValue(notes[note]);
+    outData.lowTime = outData.highTime;
+	outData.state = 1;
+	outData.val = 512;
+    initialize();
 
-    int j = 0;
     while (1) {
-    	j = (j + 1) % 1023;
-    	DACVAL = j << 6;
+    	if (goNextNote){
+    		note++;
+    		goNextNote = 0;
+    		if (notes[note] == -1){
+    			note = 0;
+    		}
+    		outData.beatTime = beats[note];
+    		outData.highTime = countValue(notes[note]);
+    		outData.lowTime = outData.highTime;
+    	}
     }
 
     return 0;
@@ -104,8 +134,10 @@ void initialize(void){
     PINSEL[1] |= (1 << 21);
 
     //Enable Timer0 Match Register Channel 0
-    T0.MR[0] = T0.TC + countVal;
+    T0.MR[0] = T0.TC + outData.highTime;
     T0.MCR |= 1;
+    T0.MR[1] = T0.TC + outData.beatTime;
+    T0.MCR |= 1 << 3;
 
     PCLKSEL0 |= (1 << 2);	//Timer0 PCLK = CCLK
     T0.IR = 0xF;          	//Clear MR Interupt flags
@@ -187,3 +219,7 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
     LCDwriteCommand(0x80);             // Return to DDRAM
 }
 
+//Returns the count value necessary for 50% duty cycle for a particular frequency.
+int countValue(int Frequency){
+	return (PCLK * 1000000) / (2 * Frequency);
+}
