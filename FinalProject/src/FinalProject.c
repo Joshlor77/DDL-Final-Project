@@ -2,6 +2,7 @@
 #include "Clocking.h"
 #include "Timer.h"
 #include "FIO.h"
+#include <math.h>
 
 // Define control and data pins
 #define RS (1<<0)  // RS pin connected to P0.0
@@ -17,7 +18,6 @@
 #define D7 (1<<10) // DB7 pin connected to P0.10
 
 #define ISER0 	(*(volatile unsigned int *) 0xE000E100)
-#define PSEL0   (*(volatile unsigned int *) 0x400FC1A8)
 
 #define BPM             112
 #define PCLK            16 	// MHz
@@ -36,7 +36,7 @@ void LCD_setCursor(unsigned int row, unsigned int col);
 void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
-int countValue(int Frequency);
+void calculateKeys(void);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
 typedef struct{
@@ -48,7 +48,7 @@ typedef struct{
 } OutData;
 OutData outData;
 
-enum Note {
+enum Beat {
 	Sixteenth	= (PCLK * 1000000 * 60) / (BPM * 4),
 	Eight 		= (PCLK * 1000000 * 60) / (BPM * 2),
 	Quarter 	= (PCLK * 1000000 * 60) / BPM,
@@ -56,7 +56,24 @@ enum Note {
 	Whole		= ((PCLK * 1000000 * 60) / BPM) * 4
 };
 
+//A4 is 440 Hz
+enum KeyNames {
+                                                                                Key_A0, Key_Bb0, Key_B0, 
+    Key_C1, Key_Db1, Key_D1, Key_Eb1, Key_E1, Key_F1, Key_Gb1, Key_G1, Key_Ab1, Key_A1, Key_Bb1, Key_B1, 
+    Key_C2, Key_Db2, Key_D2, Key_Eb2, Key_E2, Key_F2, Key_Gb2, Key_G2, Key_Ab2, Key_A2, Key_Bb2, Key_B2,
+    Key_C3, Key_Db3, Key_D3, Key_Eb3, Key_E3, Key_F3, Key_Gb3, Key_G3, Key_Ab3, Key_A3, Key_Bb3, Key_B3,
+    Key_C4, Key_Db4, Key_D4, Key_Eb4, Key_E4, Key_F4, Key_Gb4, Key_G4, Key_Ab4, Key_A4, Key_Bb4, Key_B4,
+    Key_C5, Key_Db5, Key_D5, Key_Eb5, Key_E5, Key_F5, Key_Gb5, Key_G5, Key_Ab5, Key_A5, Key_Bb5, Key_B5,
+    Key_C6, Key_Db6, Key_D6, Key_Eb6, Key_E6, Key_F6, Key_Gb6, Key_G6, Key_Ab6, Key_A6, Key_Bb6, Key_B6,
+    Key_C7, Key_Db7, Key_D7, Key_Eb7, Key_E7, Key_F7, Key_Gb7, Key_G7, Key_Ab7, Key_A7, Key_Bb7, Key_B7,
+    Key_C8
+};
+const int MaxKeys = 88;
+unsigned int KeyCounts [MaxKeys];
+
 int goNextNote = 0;
+const int notes [] = {Key_A0, Key_A1, Key_A3, -1};
+const int beats [] = {Sixteenth, Sixteenth, Sixteenth, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 void TIMER0_IRQHandler(void){
@@ -81,14 +98,7 @@ void TIMER0_IRQHandler(void){
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 int main() {
-    const int notes [] = {440, 880, 1760, -1};
-    const int beats [] = {Sixteenth, Sixteenth, Sixteenth, -1};
     int note = 0;
-    outData.beatTime = beats[note];
-    outData.highTime = countValue(notes[note]);
-    outData.lowTime = outData.highTime;
-	outData.state = 1;
-	outData.val = 512;
     initialize();
 
     while (1) {
@@ -132,6 +142,14 @@ void initialize(void){
     PINSEL[1] &= ~(3 << 20);
     PINMODE[1] &= (1 << 21);
     PINSEL[1] |= (1 << 21);
+
+    calculateKeys();
+
+    outData.beatTime = beats[0];
+    outData.highTime = countValue(notes[0]);
+    outData.lowTime = outData.highTime;
+	outData.state = 1;
+	outData.val = 512;
 
     //Enable Timer0 Match Register Channel 0
     T0.MR[0] = T0.TC + outData.highTime;
@@ -219,7 +237,9 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
     LCDwriteCommand(0x80);             // Return to DDRAM
 }
 
-//Returns the count value necessary for 50% duty cycle for a particular frequency.
-int countValue(int Frequency){
-	return (PCLK * 1000000) / (2 * Frequency);
+//Calculates the Count values needed for each key to output that frequency.
+void calculateKeys(void){
+    for (int i = 0; i < MaxKeys; i++){
+        KeyCounts[i] = (unsigned int) ((PCLK * 1000000.0) / (440.0 * powf(2.0, (i - 29.0) / 12.0)));
+    }
 }
