@@ -1,0 +1,3 @@
+../src/Clocking.c:28:6:feedSeq	8	static
+../src/Clocking.c:36:6:PLL0StartUpSeq	8	static
+../src/Clocking.c:76:6:outputClkPin	0	static

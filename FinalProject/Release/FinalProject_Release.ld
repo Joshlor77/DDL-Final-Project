@@ -6,11 +6,11 @@
  * Generated linker script file for LPC1769
  * Created from linkscript.ldt by FMCreateLinkLibraries
  * Using Freemarker v2.3.30
- * MCUXpresso IDE v11.6.1 [Build 8255] [2022-10-03] on Nov 30, 2024, 11:29:49 PM
+ * MCUXpresso IDE v11.6.1 [Build 8255] [2022-10-03] on Nov 30, 2024, 8:02:48 PM
  */
 
-INCLUDE "FinalProject_Debug_library.ld"
-INCLUDE "FinalProject_Debug_memory.ld"
+INCLUDE "FinalProject_Release_library.ld"
+INCLUDE "FinalProject_Release_memory.ld"
 
 ENTRY(ResetISR)
 

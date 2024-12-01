@@ -27,6 +27,42 @@
 #define ADSR_RES        8
 #define ADSR_MAXVAL     1023
 
+/////////////////////////////////////////////////////////////////////
+////////////////////// Structs and Enums /////////////////////////////
+typedef struct {
+	int state;
+	int highTime;
+	int lowTime;
+	int beatTime;
+} OutData;
+
+enum Note {
+	Sixteenth	= (PCLKT0 * 1000000 * 60) / (BPM * 4),
+	Eight 		= (PCLKT0 * 1000000 * 60) / (BPM * 2),
+	Quarter 	= (PCLKT0 * 1000000 * 60) / BPM,
+	Half		= (PCLKT0 * 1000000 * 60 * 2) / BPM,
+	Whole		= ((PCLKT0 * 1000000 * 60) / BPM) * 4
+};
+
+//A4 is 440 Hz
+enum KeyNames {
+                                                                                Key_A0, Key_Bb0, Key_B0,
+    Key_C1, Key_Db1, Key_D1, Key_Eb1, Key_E1, Key_F1, Key_Gb1, Key_G1, Key_Ab1, Key_A1, Key_Bb1, Key_B1,
+    Key_C2, Key_Db2, Key_D2, Key_Eb2, Key_E2, Key_F2, Key_Gb2, Key_G2, Key_Ab2, Key_A2, Key_Bb2, Key_B2,
+    Key_C3, Key_Db3, Key_D3, Key_Eb3, Key_E3, Key_F3, Key_Gb3, Key_G3, Key_Ab3, Key_A3, Key_Bb3, Key_B3,
+    Key_C4, Key_Db4, Key_D4, Key_Eb4, Key_E4, Key_F4, Key_Gb4, Key_G4, Key_Ab4, Key_A4, Key_Bb4, Key_B4,
+    Key_C5, Key_Db5, Key_D5, Key_Eb5, Key_E5, Key_F5, Key_Gb5, Key_G5, Key_Ab5, Key_A5, Key_Bb5, Key_B5,
+    Key_C6, Key_Db6, Key_D6, Key_Eb6, Key_E6, Key_F6, Key_Gb6, Key_G6, Key_Ab6, Key_A6, Key_Bb6, Key_B6,
+    Key_C7, Key_Db7, Key_D7, Key_Eb7, Key_E7, Key_F7, Key_Gb7, Key_G7, Key_Ab7, Key_A7, Key_Bb7, Key_B7,
+    Key_C8
+};
+//times in MS
+typedef struct{
+    float aTime; float aCurve;
+    float dTime; float dCurve;
+    float sRatio;float sHeight;
+    float rTime; float rCurve;
+} ADSR;
 /////////////////// Function Declarations ///////////////////////////
 void initialize(void);
 
@@ -41,77 +77,45 @@ void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
 void calculateKeys(void);
-void calculateADSR(ADSR* adsrPtr);
-float calculateADSRCurve(float x, float c);
+void calculateADSR(void);
+double calculateADSRCurve(double x, double c);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
-typedef struct {
-	int state;
-	int highTime;
-	int lowTime;
-	int beatTime;
-    int adsrData [1024];
-} OutData;
 OutData outData;
 
-enum Note {
-	Sixteenth	= (PCLKT0 * 1000000 * 60) / (BPM * 4),
-	Eight 		= (PCLKT0 * 1000000 * 60) / (BPM * 2),
-	Quarter 	= (PCLKT0 * 1000000 * 60) / BPM,
-	Half		= (PCLKT0 * 1000000 * 60 * 2) / BPM,
-	Whole		= ((PCLKT0 * 1000000 * 60) / BPM) * 4
-};
-
-//A4 is 440 Hz
-enum KeyNames {
-                                                                                Key_A0, Key_Bb0, Key_B0, 
-    Key_C1, Key_Db1, Key_D1, Key_Eb1, Key_E1, Key_F1, Key_Gb1, Key_G1, Key_Ab1, Key_A1, Key_Bb1, Key_B1, 
-    Key_C2, Key_Db2, Key_D2, Key_Eb2, Key_E2, Key_F2, Key_Gb2, Key_G2, Key_Ab2, Key_A2, Key_Bb2, Key_B2,
-    Key_C3, Key_Db3, Key_D3, Key_Eb3, Key_E3, Key_F3, Key_Gb3, Key_G3, Key_Ab3, Key_A3, Key_Bb3, Key_B3,
-    Key_C4, Key_Db4, Key_D4, Key_Eb4, Key_E4, Key_F4, Key_Gb4, Key_G4, Key_Ab4, Key_A4, Key_Bb4, Key_B4,
-    Key_C5, Key_Db5, Key_D5, Key_Eb5, Key_E5, Key_F5, Key_Gb5, Key_G5, Key_Ab5, Key_A5, Key_Bb5, Key_B5,
-    Key_C6, Key_Db6, Key_D6, Key_Eb6, Key_E6, Key_F6, Key_Gb6, Key_G6, Key_Ab6, Key_A6, Key_Bb6, Key_B6,
-    Key_C7, Key_Db7, Key_D7, Key_Eb7, Key_E7, Key_F7, Key_Gb7, Key_G7, Key_Ab7, Key_A7, Key_Bb7, Key_B7,
-    Key_C8
-};
 const int MaxKeys = 88;
-unsigned int KeyCounts [MaxKeys];
+unsigned int KeyCounts [88];
 
-//times in MS
-typedef struct{
-    float aTime; float aCurve;
-    float dTime; float dCurve;
-    float sHeight;
-    float rTime; float rCurve;
-} ADSR;
-
-//Times are in Milliseconds, sHeight is a percentage from 0 to 1
+//Times are in Milliseconds, sH	eight is a percentage from 0 to 1
 ADSR adsr = (ADSR) {
-    .aTime = 1,   .aCurve = -1,
-    .dTime = 1,   .dCurve = -1,
-    .sHeight = 0.6,
-    .rTime = 1,   .rCurve = -0.16
+	.aTime = 5,   	.aCurve = -1,
+    .dTime = 5,   	.dCurve = -1,
+    .sRatio= 0.4,	.sHeight = 0.5,
+    .rTime = 40,   	.rCurve = -1
 };
+short adsrData [5500];
 
 int sustainIdx = 0;
 unsigned int sustainTimes[5];
 int adsrSize;
 int adsrIdx;
-int adsrFsCnt = (ADSR_Fs * 1000) / (PCLKT0 * 1000000);
+int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
 
 
 int goNextNote = 0;
-const int notes [] = {Key_A0, Key_A1, Key_A3, -1};
-const int beats [] = {Sixteenth, Sixteenth, Sixteenth, -1};
+const int notes [] = {Key_C8, Key_C8, Key_C8, Key_C8, -1};
+const int beats [] = {Sixteenth, Eight, Quarter, Eight, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
     	if (outData.state){
-            if (outData.adsrData[adsrIdx] == -1){
-                DACR = outData.adsrData[adsrIdx - 1] << 6;
+            if (adsrData[adsrIdx] == -1){
+                DACR = ((unsigned int) adsrData[adsrIdx - 1]) << 6;
+            } else if (adsrIdx == adsrSize){
+            	DACR = 0;
             } else {
-    		    DACR = outData.adsrData[adsrIdx] << 6;
+    		    DACR = ((unsigned int) adsrData[adsrIdx]) << 6;
             }
     		outData.state = 0;
     		T0.MR[0] += outData.highTime;
@@ -128,7 +132,7 @@ void TIMER0_IRQHandler(void){
     	T0.IR = 2;
     }
     if (T0.IR & 4){
-        if (outData.adsrData[adsrIdx] == -1){
+        if (adsrData[adsrIdx] == -1){
             T0.MR[2] = T0.TC + sustainTimes[sustainIdx];
         } else {
             T0.MR[2] = T0.TC + adsrFsCnt;
@@ -141,34 +145,36 @@ void TIMER0_IRQHandler(void){
 }
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
+
+float t;
+
 int main() {
-    int note = 0;
     initialize();
 
+    int note = 0;
     while (1) {
     	if (goNextNote){
     		note++;
     		goNextNote = 0;
     		if (notes[note] == -1){
     			note = 0;
-    		}
-            switch (beats[note]){
-                case Sixteenth: 
-                    sustainIdx = 0; return;
-                case Eight: 
-                    sustainIdx = 1; return;
-                case Quarter: 
-                    sustainIdx = 2; return;
-                case Half: 
-                    sustainIdx = 3; return;
-                case Whole: 
-                    sustainIdx = 4; return;
-                default: 
+    		}            switch (beats[note]){
+                case Sixteenth:
+                    sustainIdx = 0; break;
+                case Eight:
+                    sustainIdx = 1; break;
+                case Quarter:
+                    sustainIdx = 2; break;
+                case Half:
+                    sustainIdx = 3; break;
+                case Whole:
+                    sustainIdx = 4; break;
+                default:
                     sustainIdx = 0;
             }
             adsrIdx = 0;
     		outData.beatTime = beats[note];
-    		outData.highTime = countValue(notes[note]);
+    		outData.highTime = KeyCounts[notes[note]];
     		outData.lowTime = outData.highTime;
     	}
     }
@@ -203,11 +209,11 @@ void initialize(void){
     PINSEL[1] |= (1 << 21);
 
     calculateKeys();
-    calculateADSR(&adsr);
+    calculateADSR();
     adsrIdx = 0;
 
     outData.beatTime = beats[0];
-    outData.highTime = countValue(notes[0]);
+    outData.highTime = KeyCounts[notes[0]];
     outData.lowTime = outData.highTime;
 	outData.state = 1;
 
@@ -306,41 +312,43 @@ void calculateKeys(void){
     }
 }
 
-void calculateADSR(ADSR* adsrPtr){
-    int idx = 0;
-    float scale =  1.0 / ADSR_Fs;
-    int atkSize = ADSR_Fs / (*adsrPtr).aTime;
-    int decSize = ADSR_Fs / (*adsrPtr).dTime;
-    float susHeight = ADSR_MAXVAL / (*adsrPtr).sHeight;
-    int relSize = ADSR_Fs / (*adsrPtr).rTime;
+void calculateADSR(void){
+    int atkSize = ADSR_Fs * (adsr.aTime);
+    int decSize = ADSR_Fs * (adsr.dTime);
+    int relSize = ADSR_Fs * (adsr.rTime);
 
     adsrSize = atkSize + decSize + relSize;
 
-    sustainTimes[0] = (Sixteenth/16) - atkSize - decSize - relSize;
-    sustainTimes[1] = (Eight/16) - atkSize - decSize - relSize;
-    sustainTimes[2] = (Quarter/16) - atkSize - decSize - relSize;
-    sustainTimes[3] = (Half/16) - atkSize - decSize - relSize;
-    sustainTimes[4] = (Whole/16) - atkSize - decSize - relSize;
+    sustainTimes[0] = (Sixteenth/160) - atkSize - decSize - relSize;
+    sustainTimes[1] = (Eight/160) - atkSize - decSize - relSize;
+    sustainTimes[2] = (Quarter/160) - atkSize - decSize - relSize;
+    sustainTimes[3] = (Half/100) - atkSize - decSize - relSize;
+    sustainTimes[4] = (Whole/160) - atkSize - decSize - relSize;
 
     for (int i = 0; i < adsrSize; i++){
-        outData.adsrData[i] = 0;
+        adsrData[i] = 0;
     }
+
+    int idx = 0;
 
     for (int i = 0; i < atkSize; i++){
-        outData.adsrData[idx] = (unsigned int) calculateADSRCurve(idx * scale, (*adsrPtr).aCurve);
-        idx++;
+        adsrData[idx] = (short) ADSR_MAXVAL * calculateADSRCurve(idx / (float) atkSize, adsr.aCurve);
+        idx += 1;
     }
+
     for (int i = 0; i < decSize; i++){
-        outData.adsrData[idx] = (unsigned int) (1 - (calculateADSRCurve(idx * scale + atkSize, (*adsrPtr).dCurve) * 1 - susHeight));
-        idx++;
+        adsrData[idx] = (short) ADSR_MAXVAL * (1 - (calculateADSRCurve(((idx - atkSize) / (float) decSize), adsr.dCurve) * (1 - adsr.sHeight)));
+        idx += 1;
     }
-    outData.adsrData[idx++] = -1; //Indicates Sustain Start
+    adsrData[idx++] = -1; //Indicates Sustain Start
+
     for (int i = 0; i < relSize; i++){
-        outData.adsrData[idx] = (unsigned int) (susHeight * (1 - calculateADSRCurve(idx * scale + atkSize + decSize, (*adsrPtr).rCurve)));
-        idx++;
+        adsrData[idx] = (short) ADSR_MAXVAL * ((adsr.sHeight) * (1 - calculateADSRCurve((idx - atkSize - decSize) / (float) relSize, adsr.rCurve)));
+        idx += 1;
     }
+
 }
 
-float calculateADSRCurve(float x, float c){
-    return ((powf(2.0, ADSR_RES * c * x) - 1) / (powf(2.0, ADSR_RES * c) - 1));
+double calculateADSRCurve(double x, double c){
+    return ((pow(2.0, ADSR_RES * c * x) - 1) / (pow(2.0, ADSR_RES * c) - 1));
 }
