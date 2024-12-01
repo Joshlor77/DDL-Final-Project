@@ -1,6 +1,6 @@
-../src/FinalProject.c:112:6:TIMER0_IRQHandler	4	static
-../src/FinalProject.c:151:5:main	16	static
-../src/FinalProject.c:185:6:initialize	176	static
+../src/FinalProject.c:118:6:TIMER0_IRQHandler	4	static
+../src/FinalProject.c:162:5:main	16	static
+../src/FinalProject.c:184:6:initialize	176	static
 ../src/FinalProject.c:234:6:delay_us	24	static
 ../src/FinalProject.c:240:6:delay_ms	16	static
 ../src/FinalProject.c:245:6:LCDwriteCommand	16	static
@@ -9,6 +9,7 @@
 ../src/FinalProject.c:279:6:LCD_setCursor	24	static
 ../src/FinalProject.c:291:6:LCD_displayString	16	static
 ../src/FinalProject.c:298:6:LCD_defineCustomChar	24	static
-../src/FinalProject.c:308:6:calculateKeys	16	static
-../src/FinalProject.c:314:6:calculateADSR	64	static
-../src/FinalProject.c:350:8:calculateADSRCurve	32	static
+../src/FinalProject.c:310:6:calculateKeys	24	static
+../src/FinalProject.c:316:6:calculateADSR	64	static
+../src/FinalProject.c:352:8:calculateADSRCurve	32	static
+../src/FinalProject.c:356:6:changeSustainIdx	16	static

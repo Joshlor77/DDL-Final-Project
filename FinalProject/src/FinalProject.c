@@ -56,6 +56,7 @@ enum KeyNames {
     Key_C7, Key_Db7, Key_D7, Key_Eb7, Key_E7, Key_F7, Key_Gb7, Key_G7, Key_Ab7, Key_A7, Key_Bb7, Key_B7,
     Key_C8
 };
+
 /* Times are in Milliseconds.
  * sHeight and sRatio is a percentage from 0 to 1
  * Times are unaffected by BPM, but sRatio is affected by BPM
@@ -82,6 +83,7 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
 void calculateKeys(void);
 void calculateADSR(void);
+void changeSustainIdx(int beat);
 double calculateADSRCurve(double x, double c);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
@@ -91,11 +93,12 @@ const int MaxKeys = 88;
 unsigned int KeyCounts [88];
 
 ADSR adsr = (ADSR) {
-	.aTime = 20,   	.aCurve = 1,
-    .dTime = 20,   	.dCurve = 1,
-    .sRatio= 0.5,	.sHeight = 0.5,
-    .rTime = 10,   	.rCurve = -1
+	.aTime = 0,   	.aCurve = -1,
+    .dTime = 0,   	.dCurve = 1,
+    .sRatio= 1,		.sHeight = 0.3,
+    .rTime = 0,   	.rCurve = -1
 };
+// Increase array size by 100 for each millisecond plus 1
 short adsrData [5500];
 
 int sustainIdx = 0;
@@ -105,14 +108,20 @@ int adsrIdx;
 int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
 
 int goNextNote = 0;
-const int notes [] = {Key_A4, Key_B4, Key_C4, Key_Ab3, -1};
-const int beats [] = {Quarter, Quarter, Quarter, Quarter, -1};
+const int notes [] = {Key_C4, Key_C4, Key_C4, Key_C4, -1};
+const int beats [] = {Half, Quarter, Quarter, Half, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
+int call1 = 0;
+int call2 = 0;
+int call3 = 0;
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
+    	call1++;
     	if (outData.state){
-    		if (adsrData[adsrIdx] == -1){
+    		if (adsrSize == 0){
+    			DACR = 1023 << 6;
+    		} else if (adsrData[adsrIdx] == -1){
     			DACR = ((unsigned int) adsrData[adsrIdx + 1]) << 6;
     		} else {
     			DACR = ((unsigned int) adsrData[adsrIdx]) << 6;
@@ -127,12 +136,14 @@ void TIMER0_IRQHandler(void){
         T0.IR = 1;
     }
     if (T0.IR & 2){
+    	call2++;
     	goNextNote = 1;
     	T0.MR[1] += outData.beatTime;
         T0.MR[2] = T0.TC + adsrFsCnt;
     	T0.IR = 2;
     }
     if (T0.IR & 4){
+    	call3++;
         if (adsrData[adsrIdx] == -1){
             T0.MR[2] = T0.TC + sustainTimes[sustainIdx];
         } else {
@@ -151,26 +162,15 @@ void TIMER0_IRQHandler(void){
 int main() {
     initialize();
     int note = 0;
+    int dutyCycle = 60;
     while (1) {
     	if (goNextNote){
     		note++;
     		goNextNote = 0;
     		if (notes[note] == -1){
     			note = 0;
-    		}            switch (beats[note]){
-                case Sixteenth:
-                    sustainIdx = 0; break;
-                case Eight:
-                    sustainIdx = 1; break;
-                case Quarter:
-                    sustainIdx = 2; break;
-                case Half:
-                    sustainIdx = 3; break;
-                case Whole:
-                    sustainIdx = 4; break;
-                default:
-                    sustainIdx = 0;
-            }
+    		}
+    		changeSustainIdx(beats[note]);
             adsrIdx = 0;
     		outData.beatTime = beats[note];
     		outData.highTime = KeyCounts[notes[note]];
@@ -211,6 +211,7 @@ void initialize(void){
     calculateADSR();
     adsrIdx = 0;
 
+    changeSustainIdx(beats[0]);
     outData.beatTime = beats[0];
     outData.highTime = KeyCounts[notes[0]];
     outData.lowTime = outData.highTime;
@@ -304,10 +305,12 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
     LCDwriteCommand(0x80);             // Return to DDRAM
 }
 
-//Calculates the Count values needed for each key to output that frequency.
+/* Calculates the Count values needed for each key to output that frequency.
+ * For 50% duty cycle, the count for a frequency, f, is PCLK / (2f)
+ */
 void calculateKeys(void){
-    for (int i = 0; i < MaxKeys; i++){
-        KeyCounts[i] = (unsigned int) ((PCLKT0 * 1000000.0) / (440.0 * powf(2.0, (i - 29.0) / 12.0)));
+    for (int i = 1; i <= MaxKeys; i++){
+        KeyCounts[i - 1] = (unsigned int) ((PCLKT0 / 2 * 1000000.0) / (440.0 * powf(2.0, (i - 49.0) / 12.0)));
     }
 }
 
@@ -349,4 +352,21 @@ void calculateADSR(void){
 
 double calculateADSRCurve(double x, double c){
     return ((pow(2.0, ADSR_CurveCntrl * c * x) - 1) / (pow(2.0, ADSR_CurveCntrl * c) - 1));
+}
+
+void changeSustainIdx(int beat){
+	switch (beat){
+        case Sixteenth:
+            sustainIdx = 0; break;
+        case Eight:
+            sustainIdx = 1; break;
+        case Quarter:
+            sustainIdx = 2; break;
+        case Half:
+            sustainIdx = 3; break;
+        case Whole:
+            sustainIdx = 4; break;
+        default:
+            sustainIdx = 0;
+    }
 }
