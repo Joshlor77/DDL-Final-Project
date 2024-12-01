@@ -46,11 +46,11 @@ float calculateADSRCurve(float x, float c);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
 typedef struct {
-	int val;
 	int state;
 	int highTime;
 	int lowTime;
 	int beatTime;
+    int adsrData [1024];
 } OutData;
 OutData outData;
 
@@ -92,13 +92,13 @@ ADSR adsr = (ADSR) {
     .sHeight = 0.6,
     .rTime = 1,   .rCurve = -0.16
 };
-unsigned int adsrArr [1024];
-int sustainStart;
-int sustainTime;
-int decaySamples;
+
+int sustainIdx = 0;
+unsigned int sustainTimes[5];
 int adsrSize;
 int adsrIdx;
 int adsrFsCnt = (ADSR_Fs * 1000) / (PCLKT0 * 1000000);
+
 
 int goNextNote = 0;
 const int notes [] = {Key_A0, Key_A1, Key_A3, -1};
@@ -108,7 +108,11 @@ const int beats [] = {Sixteenth, Sixteenth, Sixteenth, -1};
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
     	if (outData.state){
-    		DACR = outData.val << 6;
+            if (outData.adsrData[adsrIdx] == -1){
+                DACR = outData.adsrData[adsrIdx - 1] << 6;
+            } else {
+    		    DACR = outData.adsrData[adsrIdx] << 6;
+            }
     		outData.state = 0;
     		T0.MR[0] += outData.highTime;
     	} else {
@@ -124,15 +128,13 @@ void TIMER0_IRQHandler(void){
     	T0.IR = 2;
     }
     if (T0.IR & 4){
-        if (adsrIdx != adsrSize){
-            outData.val = adsrArr[adsrIdx];
-            if (adsrIdx = sustainStart){
-                T0.MR[2] = T0.TC + sustainTime;
-            } else {
-                T0.MR[2] = T0.TC + adsrFsCnt;
-            }
+        if (outData.adsrData[adsrIdx] == -1){
+            T0.MR[2] = T0.TC + sustainTimes[sustainIdx];
         } else {
             T0.MR[2] = T0.TC + adsrFsCnt;
+        }
+        if (adsrIdx < adsrSize){
+            adsrIdx++;
         }
         T0.IR = 4;
     }
@@ -150,7 +152,20 @@ int main() {
     		if (notes[note] == -1){
     			note = 0;
     		}
-            sustainTime = (outData.beatTime / 16) - notes[0] - sustainStart;
+            switch (beats[note]){
+                case Sixteenth: 
+                    sustainIdx = 0; return;
+                case Eight: 
+                    sustainIdx = 1; return;
+                case Quarter: 
+                    sustainIdx = 2; return;
+                case Half: 
+                    sustainIdx = 3; return;
+                case Whole: 
+                    sustainIdx = 4; return;
+                default: 
+                    sustainIdx = 0;
+            }
             adsrIdx = 0;
     		outData.beatTime = beats[note];
     		outData.highTime = countValue(notes[note]);
@@ -190,13 +205,11 @@ void initialize(void){
     calculateKeys();
     calculateADSR(&adsr);
     adsrIdx = 0;
-    sustainTime = (outData.beatTime / 16) - notes[0] - sustainStart;
 
     outData.beatTime = beats[0];
     outData.highTime = countValue(notes[0]);
     outData.lowTime = outData.highTime;
 	outData.state = 1;
-	outData.val = 512;
 
     //Enable Timer0 Match Register Channel 0
     T0.MR[0] = T0.TC + outData.highTime;
@@ -301,20 +314,29 @@ void calculateADSR(ADSR* adsrPtr){
     float susHeight = ADSR_MAXVAL / (*adsrPtr).sHeight;
     int relSize = ADSR_Fs / (*adsrPtr).rTime;
 
-    sustainStart = atkSize + decSize;
-    decaySamples = decSize;
     adsrSize = atkSize + decSize + relSize;
 
+    sustainTimes[0] = (Sixteenth/16) - atkSize - decSize - relSize;
+    sustainTimes[1] = (Eight/16) - atkSize - decSize - relSize;
+    sustainTimes[2] = (Quarter/16) - atkSize - decSize - relSize;
+    sustainTimes[3] = (Half/16) - atkSize - decSize - relSize;
+    sustainTimes[4] = (Whole/16) - atkSize - decSize - relSize;
+
+    for (int i = 0; i < adsrSize; i++){
+        outData.adsrData[i] = 0;
+    }
+
     for (int i = 0; i < atkSize; i++){
-        adsrArr[idx] = (unsigned int) calculateADSRCurve(idx * scale, (*adsrPtr).aCurve);
+        outData.adsrData[idx] = (unsigned int) calculateADSRCurve(idx * scale, (*adsrPtr).aCurve);
         idx++;
     }
     for (int i = 0; i < decSize; i++){
-        adsrArr[idx] = (unsigned int) (1 - (calculateADSRCurve(idx * scale + atkSize, (*adsrPtr).dCurve) * 1 - susHeight));
+        outData.adsrData[idx] = (unsigned int) (1 - (calculateADSRCurve(idx * scale + atkSize, (*adsrPtr).dCurve) * 1 - susHeight));
         idx++;
     }
+    outData.adsrData[idx++] = -1; //Indicates Sustain Start
     for (int i = 0; i < relSize; i++){
-        adsrArr[idx] = (unsigned int) (susHeight * (1 - calculateADSRCurve(idx * scale + atkSize + decSize, (*adsrPtr).rCurve)));
+        outData.adsrData[idx] = (unsigned int) (susHeight * (1 - calculateADSRCurve(idx * scale + atkSize + decSize, (*adsrPtr).rCurve)));
         idx++;
     }
 }
