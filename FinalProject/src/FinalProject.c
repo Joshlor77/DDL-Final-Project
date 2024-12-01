@@ -23,8 +23,8 @@
 #define DACMAXIMUM		1023
 
 #define BPM             112
-#define ADSR_Fs         100 	// Khz
-#define ADSR_CurveCntrl	1		// Increases overall effect of curve of ADSR
+#define ADSR_Fs         20 	// Khz
+#define ADSR_CurveCntrl	32		// Increases overall effect of curve of ADSR
 #define ADSR_MAXVAL     1023
 
 /////////////////////////////////////////////////////////////////////
@@ -35,6 +35,19 @@ typedef struct {
 	int lowTime;
 	int beatTime;
 } OutData;
+
+
+/* Times are in Milliseconds.
+ * sHeight and sRatio is a percentage from 0 to 1
+ * Times are unaffected by BPM, but sRatio is affected by BPM
+ * sRatio is how long to sustain the note after subtracting the ADR times from the total beat time.
+ */
+typedef struct{
+    float aTime; float aCurve;
+    float dTime; float dCurve;
+    float sRatio;float sHeight;
+    float rTime; float rCurve;
+} ADSR;
 
 enum Note {
 	Sixteenth	= (PCLKT0 * 1000000 * 60) / (BPM * 4),
@@ -56,18 +69,6 @@ enum KeyNames {
     Key_C7, Key_Db7, Key_D7, Key_Eb7, Key_E7, Key_F7, Key_Gb7, Key_G7, Key_Ab7, Key_A7, Key_Bb7, Key_B7,
     Key_C8
 };
-
-/* Times are in Milliseconds.
- * sHeight and sRatio is a percentage from 0 to 1
- * Times are unaffected by BPM, but sRatio is affected by BPM
- * sRatio is how long to sustain the note after subtracting the ADR times from the total beat time.
- */
-typedef struct{
-    float aTime; float aCurve;
-    float dTime; float dCurve;
-    float sRatio;float sHeight;
-    float rTime; float rCurve;
-} ADSR;
 /////////////////// Function Declarations ///////////////////////////
 void initialize(void);
 
@@ -87,37 +88,32 @@ void changeSustainIdx(int beat);
 double calculateADSRCurve(double x, double c);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
-OutData outData;
-
 const int MaxKeys = 88;
 unsigned int KeyCounts [88];
 
+OutData outData;
 ADSR adsr = (ADSR) {
-	.aTime = 0,   	.aCurve = -1,
-    .dTime = 0,   	.dCurve = 1,
-    .sRatio= 1,		.sHeight = 0.3,
-    .rTime = 0,   	.rCurve = -1
+	.aTime = 20,   	.aCurve = 0.62,
+    .dTime = 20,   	.dCurve = 1,
+    .sRatio= 1,		.sHeight = 0.5,
+    .rTime = 40,   	.rCurve = -0.1
 };
-// Increase array size by 100 for each millisecond plus 1
-short adsrData [5500];
 
+// Increase array size by 100 for each millisecond plus 1
+volatile short adsrData [8100];
 int sustainIdx = 0;
 unsigned int sustainTimes[5];
 int adsrSize;
-int adsrIdx;
+volatile int adsrIdx;
 int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
 
 int goNextNote = 0;
-const int notes [] = {Key_C4, Key_C4, Key_C4, Key_C4, -1};
-const int beats [] = {Half, Quarter, Quarter, Half, -1};
+const int notes [] = {Key_C8, Key_C8, Key_C8, Key_C8, -1};
+const int beats [] = {Sixteenth, Sixteenth, Sixteenth, Sixteenth, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
-int call1 = 0;
-int call2 = 0;
-int call3 = 0;
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
-    	call1++;
     	if (outData.state){
     		if (adsrSize == 0){
     			DACR = 1023 << 6;
@@ -136,14 +132,12 @@ void TIMER0_IRQHandler(void){
         T0.IR = 1;
     }
     if (T0.IR & 2){
-    	call2++;
     	goNextNote = 1;
     	T0.MR[1] += outData.beatTime;
         T0.MR[2] = T0.TC + adsrFsCnt;
     	T0.IR = 2;
     }
     if (T0.IR & 4){
-    	call3++;
         if (adsrData[adsrIdx] == -1){
             T0.MR[2] = T0.TC + sustainTimes[sustainIdx];
         } else {
@@ -158,12 +152,13 @@ void TIMER0_IRQHandler(void){
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
-
+int val = 0;
 int main() {
     initialize();
     int note = 0;
     int dutyCycle = 60;
     while (1) {
+    	val = T0.MR[2] - T0.TC;
     	if (goNextNote){
     		note++;
     		goNextNote = 0;
@@ -321,11 +316,11 @@ void calculateADSR(void){
 
     adsrSize = atkSize + decSize + relSize;
 
-    sustainTimes[0] = (Sixteenth - adsrSize * 160) * adsr.sRatio;
-    sustainTimes[1] = (Eight - adsrSize * 160 * adsr.sRatio);
-    sustainTimes[2] = (Quarter - adsrSize * 160) * adsr.sRatio;
-    sustainTimes[3] = (Half - adsrSize * 160) * adsr.sRatio;
-    sustainTimes[4] = (Whole - adsrSize * 160) * adsr.sRatio;
+    sustainTimes[0] = (Sixteenth - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[1] = (Eight - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[2] = (Quarter - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[3] = (Half - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[4] = (Whole - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
 
     for (int i = 0; i < adsrSize; i++){
         adsrData[i] = 0;
