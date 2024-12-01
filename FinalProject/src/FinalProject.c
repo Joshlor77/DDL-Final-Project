@@ -19,12 +19,12 @@
 
 #define ISER0 	(*(volatile unsigned int *) 0xE000E100)
 
-#define PCLKT0          16 	// MHz
+#define PCLKT0          16 		// MHz
 #define DACMAXIMUM		1023
 
 #define BPM             112
-#define ADSR_Fs         100 // Khz
-#define ADSR_RES        8
+#define ADSR_Fs         100 	// Khz
+#define ADSR_CurveCntrl	1		// Increases overall effect of curve of ADSR
 #define ADSR_MAXVAL     1023
 
 /////////////////////////////////////////////////////////////////////
@@ -56,7 +56,11 @@ enum KeyNames {
     Key_C7, Key_Db7, Key_D7, Key_Eb7, Key_E7, Key_F7, Key_Gb7, Key_G7, Key_Ab7, Key_A7, Key_Bb7, Key_B7,
     Key_C8
 };
-//times in MS
+/* Times are in Milliseconds.
+ * sHeight and sRatio is a percentage from 0 to 1
+ * Times are unaffected by BPM, but sRatio is affected by BPM
+ * sRatio is how long to sustain the note after subtracting the ADR times from the total beat time.
+ */
 typedef struct{
     float aTime; float aCurve;
     float dTime; float dCurve;
@@ -86,12 +90,11 @@ OutData outData;
 const int MaxKeys = 88;
 unsigned int KeyCounts [88];
 
-//Times are in Milliseconds, sH	eight is a percentage from 0 to 1
 ADSR adsr = (ADSR) {
-	.aTime = 5,   	.aCurve = -1,
-    .dTime = 5,   	.dCurve = -1,
-    .sRatio= 0.4,	.sHeight = 0.5,
-    .rTime = 40,   	.rCurve = -1
+	.aTime = 20,   	.aCurve = 1,
+    .dTime = 20,   	.dCurve = 1,
+    .sRatio= 0.5,	.sHeight = 0.5,
+    .rTime = 10,   	.rCurve = -1
 };
 short adsrData [5500];
 
@@ -101,22 +104,19 @@ int adsrSize;
 int adsrIdx;
 int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
 
-
 int goNextNote = 0;
-const int notes [] = {Key_C8, Key_C8, Key_C8, Key_C8, -1};
-const int beats [] = {Sixteenth, Eight, Quarter, Eight, -1};
+const int notes [] = {Key_A4, Key_B4, Key_C4, Key_Ab3, -1};
+const int beats [] = {Quarter, Quarter, Quarter, Quarter, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
     	if (outData.state){
-            if (adsrData[adsrIdx] == -1){
-                DACR = ((unsigned int) adsrData[adsrIdx - 1]) << 6;
-            } else if (adsrIdx == adsrSize){
-            	DACR = 0;
-            } else {
-    		    DACR = ((unsigned int) adsrData[adsrIdx]) << 6;
-            }
+    		if (adsrData[adsrIdx] == -1){
+    			DACR = ((unsigned int) adsrData[adsrIdx + 1]) << 6;
+    		} else {
+    			DACR = ((unsigned int) adsrData[adsrIdx]) << 6;
+    		}
     		outData.state = 0;
     		T0.MR[0] += outData.highTime;
     	} else {
@@ -129,6 +129,7 @@ void TIMER0_IRQHandler(void){
     if (T0.IR & 2){
     	goNextNote = 1;
     	T0.MR[1] += outData.beatTime;
+        T0.MR[2] = T0.TC + adsrFsCnt;
     	T0.IR = 2;
     }
     if (T0.IR & 4){
@@ -146,11 +147,9 @@ void TIMER0_IRQHandler(void){
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
-float t;
 
 int main() {
     initialize();
-
     int note = 0;
     while (1) {
     	if (goNextNote){
@@ -319,18 +318,17 @@ void calculateADSR(void){
 
     adsrSize = atkSize + decSize + relSize;
 
-    sustainTimes[0] = (Sixteenth/160) - atkSize - decSize - relSize;
-    sustainTimes[1] = (Eight/160) - atkSize - decSize - relSize;
-    sustainTimes[2] = (Quarter/160) - atkSize - decSize - relSize;
-    sustainTimes[3] = (Half/100) - atkSize - decSize - relSize;
-    sustainTimes[4] = (Whole/160) - atkSize - decSize - relSize;
+    sustainTimes[0] = (Sixteenth - adsrSize * 160) * adsr.sRatio;
+    sustainTimes[1] = (Eight - adsrSize * 160 * adsr.sRatio);
+    sustainTimes[2] = (Quarter - adsrSize * 160) * adsr.sRatio;
+    sustainTimes[3] = (Half - adsrSize * 160) * adsr.sRatio;
+    sustainTimes[4] = (Whole - adsrSize * 160) * adsr.sRatio;
 
     for (int i = 0; i < adsrSize; i++){
         adsrData[i] = 0;
     }
 
     int idx = 0;
-
     for (int i = 0; i < atkSize; i++){
         adsrData[idx] = (short) ADSR_MAXVAL * calculateADSRCurve(idx / (float) atkSize, adsr.aCurve);
         idx += 1;
@@ -350,5 +348,5 @@ void calculateADSR(void){
 }
 
 double calculateADSRCurve(double x, double c){
-    return ((pow(2.0, ADSR_RES * c * x) - 1) / (pow(2.0, ADSR_RES * c) - 1));
+    return ((pow(2.0, ADSR_CurveCntrl * c * x) - 1) / (pow(2.0, ADSR_CurveCntrl * c) - 1));
 }
