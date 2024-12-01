@@ -19,10 +19,13 @@
 
 #define ISER0 	(*(volatile unsigned int *) 0xE000E100)
 
-#define BPM             112
-#define PCLKT0            16 	// MHz
+#define PCLKT0          16 	// MHz
 #define DACMAXIMUM		1023
 
+#define BPM             112
+#define ADSR_Fs         100 // Khz
+#define ADSR_RES        8
+#define ADSR_MAXVAL     1023
 
 /////////////////// Function Declarations ///////////////////////////
 void initialize(void);
@@ -37,6 +40,9 @@ void LCD_setCursor(unsigned int row, unsigned int col);
 void LCD_displayString(char *str);
 void LCD_defineCustomChar(unsigned int location, unsigned int *pattern);
 
+void calculateKeys(void);
+void calculateADSR(ADSR* adsrPtr);
+float calculateADSRCurve(float x, float c);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
 typedef struct {
@@ -71,19 +77,28 @@ enum KeyNames {
 const int MaxKeys = 88;
 unsigned int KeyCounts [MaxKeys];
 
+//times in MS
 typedef struct{
     float aTime; float aCurve;
     float dTime; float dCurve;
-    float sTime; float sHeight;
+    float sHeight;
     float rTime; float rCurve;
 } ADSR;
 
+//Times are in Milliseconds, sHeight is a percentage from 0 to 1
 ADSR adsr = (ADSR) {
-    .aTime = 0.5,   .aCurve = -1,
-    .dTime = 0.3,   .dCurve = -1,
-    .sTime = 0.65,  .sHeight = 0.6,
-    .rTime = 0.4,   .rCurve = -0.16
+    .aTime = 1,   .aCurve = -1,
+    .dTime = 1,   .dCurve = -1,
+    .sHeight = 0.6,
+    .rTime = 1,   .rCurve = -0.16
 };
+unsigned int adsrArr [1024];
+int sustainStart;
+int sustainTime;
+int decaySamples;
+int adsrSize;
+int adsrIdx;
+int adsrFsCnt = (ADSR_Fs * 1000) / (PCLKT0 * 1000000);
 
 int goNextNote = 0;
 const int notes [] = {Key_A0, Key_A1, Key_A3, -1};
@@ -108,6 +123,19 @@ void TIMER0_IRQHandler(void){
     	T0.MR[1] += outData.beatTime;
     	T0.IR = 2;
     }
+    if (T0.IR & 4){
+        if (adsrIdx != adsrSize){
+            outData.val = adsrArr[adsrIdx];
+            if (adsrIdx = sustainStart){
+                T0.MR[2] = T0.TC + sustainTime;
+            } else {
+                T0.MR[2] = T0.TC + adsrFsCnt;
+            }
+        } else {
+            T0.MR[2] = T0.TC + adsrFsCnt;
+        }
+        T0.IR = 4;
+    }
 }
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
@@ -122,6 +150,8 @@ int main() {
     		if (notes[note] == -1){
     			note = 0;
     		}
+            sustainTime = (outData.beatTime / 16) - notes[0] - sustainStart;
+            adsrIdx = 0;
     		outData.beatTime = beats[note];
     		outData.highTime = countValue(notes[note]);
     		outData.lowTime = outData.highTime;
@@ -158,6 +188,9 @@ void initialize(void){
     PINSEL[1] |= (1 << 21);
 
     calculateKeys();
+    calculateADSR(&adsr);
+    adsrIdx = 0;
+    sustainTime = (outData.beatTime / 16) - notes[0] - sustainStart;
 
     outData.beatTime = beats[0];
     outData.highTime = countValue(notes[0]);
@@ -170,6 +203,8 @@ void initialize(void){
     T0.MCR |= 1;
     T0.MR[1] = T0.TC + outData.beatTime;
     T0.MCR |= 1 << 3;
+    T0.MR[2] = T0.TC + adsrFsCnt;
+    T0.MCR |= 1 << 6;
 
     PCLKSEL0 |= (1 << 2);	//Timer0 PCLKT0 = CCLK
     T0.IR = 0xF;          	//Clear MR Interupt flags
@@ -249,4 +284,41 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
         LCDwriteData(pattern[i]);      // Write each row of the pattern
     }
     LCDwriteCommand(0x80);             // Return to DDRAM
+}
+
+//Calculates the Count values needed for each key to output that frequency.
+void calculateKeys(void){
+    for (int i = 0; i < MaxKeys; i++){
+        KeyCounts[i] = (unsigned int) ((PCLKT0 * 1000000.0) / (440.0 * powf(2.0, (i - 29.0) / 12.0)));
+    }
+}
+
+void calculateADSR(ADSR* adsrPtr){
+    int idx = 0;
+    float scale =  1.0 / ADSR_Fs;
+    int atkSize = ADSR_Fs / (*adsrPtr).aTime;
+    int decSize = ADSR_Fs / (*adsrPtr).dTime;
+    float susHeight = ADSR_MAXVAL / (*adsrPtr).sHeight;
+    int relSize = ADSR_Fs / (*adsrPtr).rTime;
+
+    sustainStart = atkSize + decSize;
+    decaySamples = decSize;
+    adsrSize = atkSize + decSize + relSize;
+
+    for (int i = 0; i < atkSize; i++){
+        adsrArr[idx] = (unsigned int) calculateADSRCurve(idx * scale, (*adsrPtr).aCurve);
+        idx++;
+    }
+    for (int i = 0; i < decSize; i++){
+        adsrArr[idx] = (unsigned int) (1 - (calculateADSRCurve(idx * scale + atkSize, (*adsrPtr).dCurve) * 1 - susHeight));
+        idx++;
+    }
+    for (int i = 0; i < relSize; i++){
+        adsrArr[idx] = (unsigned int) (susHeight * (1 - calculateADSRCurve(idx * scale + atkSize + decSize, (*adsrPtr).rCurve)));
+        idx++;
+    }
+}
+
+float calculateADSRCurve(float x, float c){
+    return ((powf(2.0, ADSR_RES * c * x) - 1) / (powf(2.0, ADSR_RES * c) - 1));
 }
