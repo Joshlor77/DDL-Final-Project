@@ -10,6 +10,6 @@
 ../src/FinalProject.c:287:6:LCD_displayString	16	static
 ../src/FinalProject.c:294:6:LCD_defineCustomChar	24	static
 ../src/FinalProject.c:306:6:calculateKeys	24	static
-../src/FinalProject.c:312:6:calculateADSR	64	static
-../src/FinalProject.c:348:8:calculateADSRCurve	32	static
-../src/FinalProject.c:352:6:changeSustainIdx	16	static
+../src/FinalProject.c:312:6:calculateADSR	72	static
+../src/FinalProject.c:350:8:calculateADSRCurve	32	static
+../src/FinalProject.c:354:6:changeSustainIdx	16	static

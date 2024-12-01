@@ -23,7 +23,7 @@
 #define DACMAXIMUM		1023
 
 #define BPM             112
-#define ADSR_Fs         20 	// Khz
+#define ADSR_Fs         10 	// Khz
 #define ADSR_CurveCntrl	32		// Increases overall effect of curve of ADSR
 #define ADSR_MAXVAL     1023
 
@@ -93,14 +93,14 @@ unsigned int KeyCounts [88];
 
 OutData outData;
 ADSR adsr = (ADSR) {
-	.aTime = 20,   	.aCurve = 0.62,
-    .dTime = 20,   	.dCurve = 1,
-    .sRatio= 1,		.sHeight = 0.5,
-    .rTime = 40,   	.rCurve = -0.1
+	.aTime = 200,   .aCurve = 0.16,
+    .dTime = 1,   .dCurve = 1,
+    .sRatio= 1,		.sHeight = 1,
+    .rTime = 200,   .rCurve = -0.1
 };
+// Array size should be at least (ADSR_Fs * totalMilliseconds) + 1
+volatile short adsrData [6001];
 
-// Increase array size by 100 for each millisecond plus 1
-volatile short adsrData [8100];
 int sustainIdx = 0;
 unsigned int sustainTimes[5];
 int adsrSize;
@@ -108,14 +108,14 @@ volatile int adsrIdx;
 int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
 
 int goNextNote = 0;
-const int notes [] = {Key_C8, Key_C8, Key_C8, Key_C8, -1};
-const int beats [] = {Sixteenth, Sixteenth, Sixteenth, Sixteenth, -1};
+const int notes [] = {Key_A4, Key_B4, Key_C4, Key_D4, -1};
+const int beats [] = {Quarter, Quarter, Quarter, Quarter, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 void TIMER0_IRQHandler(void){
     if (T0.IR & 1){
     	if (outData.state){
-    		if (adsrSize == 0){
+    		if (adsrSize <= 1){
     			DACR = 1023 << 6;
     		} else if (adsrData[adsrIdx] == -1){
     			DACR = ((unsigned int) adsrData[adsrIdx + 1]) << 6;
@@ -314,7 +314,7 @@ void calculateADSR(void){
     int decSize = ADSR_Fs * (adsr.dTime);
     int relSize = ADSR_Fs * (adsr.rTime);
 
-    adsrSize = atkSize + decSize + relSize;
+    adsrSize = atkSize + decSize + relSize + 1;
 
     sustainTimes[0] = (Sixteenth - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
     sustainTimes[1] = (Eight - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
@@ -325,21 +325,23 @@ void calculateADSR(void){
     for (int i = 0; i < adsrSize; i++){
         adsrData[i] = 0;
     }
-
+    int idxShift = 0;
     int idx = 0;
     for (int i = 0; i < atkSize; i++){
         adsrData[idx] = (short) ADSR_MAXVAL * calculateADSRCurve(idx / (float) atkSize, adsr.aCurve);
         idx += 1;
     }
 
+    idxShift = atkSize;
     for (int i = 0; i < decSize; i++){
-        adsrData[idx] = (short) ADSR_MAXVAL * (1 - (calculateADSRCurve(((idx - atkSize) / (float) decSize), adsr.dCurve) * (1 - adsr.sHeight)));
+        adsrData[idx] = (short) ADSR_MAXVAL * (1 - (calculateADSRCurve(((idx - idxShift) / (float) decSize), adsr.dCurve) * (1 - adsr.sHeight)));
         idx += 1;
     }
-    adsrData[idx++] = -1; //Indicates Sustain Start
 
+    adsrData[idx++] = -1; //Indicates Sustain Start
+    idxShift = atkSize + decSize;
     for (int i = 0; i < relSize; i++){
-        adsrData[idx] = (short) ADSR_MAXVAL * ((adsr.sHeight) * (1 - calculateADSRCurve((idx - atkSize - decSize) / (float) relSize, adsr.rCurve)));
+        adsrData[idx] = (short) ADSR_MAXVAL * ((adsr.sHeight) * (1 - calculateADSRCurve((idx - idxShift) / (float) relSize, adsr.rCurve)));
         idx += 1;
     }
 
