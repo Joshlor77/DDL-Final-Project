@@ -21,9 +21,10 @@
 
 #define PCLKT0          16 		// MHz
 #define DACMAXIMUM		1023
+#define DUTYCYCLE		0.75		//0 to 1
 
 #define BPM             112
-#define ADSR_Fs         10 	// Khz
+#define ADSR_Fs         10 		// Khz
 #define ADSR_CurveCntrl	32		// Increases overall effect of curve of ADSR
 #define ADSR_MAXVAL     1023
 
@@ -88,27 +89,32 @@ void changeSustainIdx(int beat);
 double calculateADSRCurve(double x, double c);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
+const int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
+
 const int MaxKeys = 88;
-unsigned int KeyCounts [88];
+unsigned int KeyHighCount [88];
+unsigned int KeyLowCount [88];
+
 
 OutData outData;
+//Selecting long ADSR can make notes of lower beats not reach later stages.
 ADSR adsr = (ADSR) {
-	.aTime = 200,   .aCurve = 0.16,
-    .dTime = 1,   .dCurve = 1,
-    .sRatio= 1,		.sHeight = 1,
+	.aTime = 25,   	.aCurve = 0.16,
+    .dTime = 25,   .dCurve = -0.5,
+    .sRatio= 1,		.sHeight = 0.5,
     .rTime = 200,   .rCurve = -0.1
 };
 // Array size should be at least (ADSR_Fs * totalMilliseconds) + 1
-volatile short adsrData [6001];
+volatile short adsrData [3100];
 
 int sustainIdx = 0;
 unsigned int sustainTimes[5];
+
 int adsrSize;
 volatile int adsrIdx;
-int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
 
 int goNextNote = 0;
-const int notes [] = {Key_A4, Key_B4, Key_C4, Key_D4, -1};
+const int notes [] = {Key_A4, Key_A4, Key_A4, Key_A4, -1};
 const int beats [] = {Quarter, Quarter, Quarter, Quarter, -1};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
@@ -156,7 +162,6 @@ int val = 0;
 int main() {
     initialize();
     int note = 0;
-    int dutyCycle = 60;
     while (1) {
     	val = T0.MR[2] - T0.TC;
     	if (goNextNote){
@@ -168,8 +173,8 @@ int main() {
     		changeSustainIdx(beats[note]);
             adsrIdx = 0;
     		outData.beatTime = beats[note];
-    		outData.highTime = KeyCounts[notes[note]];
-    		outData.lowTime = outData.highTime;
+    		outData.highTime = KeyHighCount[notes[note]];
+    		outData.lowTime = KeyLowCount[notes[note]];
     	}
     }
 
@@ -208,8 +213,8 @@ void initialize(void){
 
     changeSustainIdx(beats[0]);
     outData.beatTime = beats[0];
-    outData.highTime = KeyCounts[notes[0]];
-    outData.lowTime = outData.highTime;
+    outData.highTime = KeyHighCount[notes[0]];
+    outData.lowTime = KeyLowCount[notes[0]];
 	outData.state = 1;
 
     //Enable Timer0 Match Register Channel 0
@@ -304,8 +309,11 @@ void LCD_defineCustomChar(unsigned int location, unsigned int *pattern) {
  * For 50% duty cycle, the count for a frequency, f, is PCLK / (2f)
  */
 void calculateKeys(void){
+	unsigned int totalCount;
     for (int i = 1; i <= MaxKeys; i++){
-        KeyCounts[i - 1] = (unsigned int) ((PCLKT0 / 2 * 1000000.0) / (440.0 * powf(2.0, (i - 49.0) / 12.0)));
+    	totalCount = (unsigned int) ((PCLKT0 * 1000000.0) / (440.0 * powf(2.0, (i - 49.0) / 12.0)));
+        KeyHighCount[i - 1] = (unsigned int) totalCount * DUTYCYCLE;
+        KeyLowCount[i - 1] = (unsigned int) totalCount - KeyHighCount[i - 1];
     }
 }
 
