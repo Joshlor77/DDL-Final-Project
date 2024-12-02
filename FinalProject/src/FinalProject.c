@@ -99,13 +99,13 @@ unsigned int KeyLowCount [88];
 OutData outData;
 //Selecting long ADSR can make notes of lower beats not reach later stages.
 ADSR adsr = (ADSR) {
-	.aTime = 25,   	.aCurve = 0.16,
-    .dTime = 25,   .dCurve = -0.5,
-    .sRatio= 1,		.sHeight = 0.5,
+	.aTime = 10,   	.aCurve = 0.16,
+    .dTime = 100,   .dCurve = -0.5,
+    .sRatio= 0,		.sHeight = 0.5,
     .rTime = 200,   .rCurve = -0.1
 };
 // Array size should be at least (ADSR_Fs * totalMilliseconds) + 1
-volatile short adsrData [3100];
+volatile short adsrData [4100];
 
 int sustainIdx = 0;
 unsigned int sustainTimes[5];
@@ -144,8 +144,8 @@ void TIMER0_IRQHandler(void){
     	T0.IR = 2;
     }
     if (T0.IR & 4){
-        if (adsrData[adsrIdx] == -1){
-            T0.MR[2] = T0.TC + sustainTimes[sustainIdx];
+        if (adsrData[adsrIdx] == -1 && sustainTimes[sustainIdx] != 0){
+			T0.MR[2] = T0.TC + sustainTimes[sustainIdx];
         } else {
             T0.MR[2] = T0.TC + adsrFsCnt;
         }
