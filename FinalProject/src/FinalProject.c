@@ -99,10 +99,10 @@ unsigned int KeyLowCount [88];
 OutData outData;
 //Selecting long ADSR can make notes of lower beats not reach later stages.
 ADSR adsr = (ADSR) {
-	.aTime = 10,   	.aCurve = 0.16,
-    .dTime = 100,   .dCurve = -0.5,
-    .sRatio= 0,		.sHeight = 0.5,
-    .rTime = 200,   .rCurve = -0.1
+	.aTime = 100,   .aCurve = 0.16,
+    .dTime = 200,   .dCurve = 0.1,
+    .sRatio= 0,		.sHeight = 0.0,
+    .rTime = 0,   	.rCurve = -0.1
 };
 // Array size should be at least (ADSR_Fs * totalMilliseconds) + 1
 volatile short adsrData [4100];
