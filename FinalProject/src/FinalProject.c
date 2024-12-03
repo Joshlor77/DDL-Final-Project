@@ -21,11 +21,11 @@
 
 #define PCLKT0          16 		// MHz
 #define DACMAXIMUM		1023
-#define DUTYCYCLE		0.75		//0 to 1
+#define DUTYCYCLE		0.125	//0 to 1
 
-#define BPM             112
+#define BPM             103
 #define ADSR_Fs         10 		// Khz
-#define ADSR_CurveCntrl	32		// Increases overall effect of curve of ADSR
+#define ADSR_CurveCntrl	16		// Increases overall effect of curve of ADSR
 #define ADSR_MAXVAL     1023
 
 /////////////////////////////////////////////////////////////////////
@@ -52,10 +52,22 @@ typedef struct{
 
 enum Note {
 	Sixteenth	= (PCLKT0 * 1000000 * 60) / (BPM * 4),
+	DotSixteenth= (int) (Sixteenth + 0.5 * Sixteenth),
 	Eight 		= (PCLKT0 * 1000000 * 60) / (BPM * 2),
+	DotEight	= (int) (Eight + 0.5 * Eight),
 	Quarter 	= (PCLKT0 * 1000000 * 60) / BPM,
+	DotQuarter 	= (int) (Quarter + 0.5 * Quarter),
 	Half		= (PCLKT0 * 1000000 * 60 * 2) / BPM,
+	DotHalf 	= (int) (Half + 0.5 * Half),
 	Whole		= ((PCLKT0 * 1000000 * 60) / BPM) * 4
+};
+
+enum NoteChar {
+	QuarterChar,
+	EightChar,
+	HalfChar,
+	SharpChar,
+	FlatChar,
 };
 
 //A4 is 440 Hz
@@ -87,6 +99,7 @@ void calculateKeys(void);
 void calculateADSR(void);
 void changeSustainIdx(int beat);
 double calculateADSRCurve(double x, double c);
+void displayNote(int noteID);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
 const int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
@@ -99,23 +112,57 @@ unsigned int KeyLowCount [88];
 OutData outData;
 //Selecting long ADSR can make notes of lower beats not reach later stages.
 ADSR adsr = (ADSR) {
-	.aTime = 100,   .aCurve = 0.16,
-    .dTime = 200,   .dCurve = 0.1,
-    .sRatio= 0,		.sHeight = 0.0,
-    .rTime = 0,   	.rCurve = -0.1
+	.aTime = 25,   	.aCurve = -0.1,
+    .dTime = 50,   	.dCurve = -0.14,
+    .sRatio= 1,		.sHeight = 0.3,
+    .rTime = 100,   .rCurve = -0.25
 };
 // Array size should be at least (ADSR_Fs * totalMilliseconds) + 1
 volatile short adsrData [4100];
 
 int sustainIdx = 0;
-unsigned int sustainTimes[5];
+unsigned int sustainTimes[9];
 
 int adsrSize;
 volatile int adsrIdx;
 
 int goNextNote = 0;
-const int notes [] = {Key_A4, Key_A4, Key_A4, Key_A4, -1};
-const int beats [] = {Quarter, Quarter, Quarter, Quarter, -1};
+const int notes [] = {
+		Key_A3, Key_A3, Key_A3, Key_F3, Key_C4,
+		Key_A3, Key_F3, Key_C4, Key_A3,
+		Key_E4, Key_E4, Key_E4, Key_F4, Key_C4,
+
+		Key_Ab3, Key_F3, Key_C4, Key_A3,
+		Key_A4, Key_A3, Key_A3, Key_A4, Key_Ab4, Key_G4,
+		Key_Gb4, Key_F4, Key_Gb4, Key_Bb3, Key_Eb3, Key_D3, Key_Db3,
+
+		Key_C4, Key_B3, Key_C4, Key_F3, Key_Ab3, Key_F3, Key_Ab3,
+		Key_C4, Key_A3, Key_C4, Key_E3,
+		Key_A4, Key_A3, Key_A3, Key_A4, Key_Ab4, Key_G4,
+
+		Key_Gb4, Key_F4, Key_Gb4, Key_Bb3, Key_Eb3, Key_D3, Key_Db3,
+		Key_C4, Key_B3, Key_C4, Key_F3, Key_Ab3, Key_F3, Key_C3,
+		Key_A3, Key_F3, Key_C4, Key_A3,
+		-1
+};
+const int beats [] = {
+		Quarter, Quarter, Quarter, Eight, Eight,
+		Quarter, Eight, Eight, Half,
+		Quarter, Quarter, Quarter, Eight, Eight,
+
+		Quarter, Eight, Eight, Half,
+		Quarter, Eight, Eight, Quarter, Eight, Eight,
+		Eight, Eight, Eight, Eight, Quarter, Eight, Eight,
+
+		Eight, Eight, Eight, Eight, Quarter, Eight, Eight,
+		Quarter, Eight, Eight, Half,
+		Quarter, Eight, Eight, Quarter, Eight, Eight,
+
+		Eight, Eight, Eight, Eight, Quarter, Eight, Eight,
+		Eight, Eight, Eight, Eight, Quarter, Eight, Eight,
+		Quarter, Eight, Eight, Half,
+		-1
+};
 /////////////////////////////////////////////////////////////////////
 /////////////////////// Interrupt Functions /////////////////////////
 void TIMER0_IRQHandler(void){
@@ -139,7 +186,6 @@ void TIMER0_IRQHandler(void){
     }
     if (T0.IR & 2){
     	goNextNote = 1;
-    	T0.MR[1] += outData.beatTime;
         T0.MR[2] = T0.TC + adsrFsCnt;
     	T0.IR = 2;
     }
@@ -158,23 +204,25 @@ void TIMER0_IRQHandler(void){
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
-int val = 0;
 int main() {
     initialize();
     int note = 0;
     while (1) {
-    	val = T0.MR[2] - T0.TC;
     	if (goNextNote){
+
+
     		note++;
     		goNextNote = 0;
     		if (notes[note] == -1){
     			note = 0;
+    			//delay_ms(2000);
     		}
     		changeSustainIdx(beats[note]);
             adsrIdx = 0;
-    		outData.beatTime = beats[note];
     		outData.highTime = KeyHighCount[notes[note]];
     		outData.lowTime = KeyLowCount[notes[note]];
+        	T0.MR[1] += beats[note];
+        	displayNote(note);
     	}
     }
 
@@ -216,6 +264,7 @@ void initialize(void){
     outData.highTime = KeyHighCount[notes[0]];
     outData.lowTime = KeyLowCount[notes[0]];
 	outData.state = 1;
+	displayNote(0);
 
     //Enable Timer0 Match Register Channel 0
     T0.MR[0] = T0.TC + outData.highTime;
@@ -325,10 +374,14 @@ void calculateADSR(void){
     adsrSize = atkSize + decSize + relSize + 1;
 
     sustainTimes[0] = (Sixteenth - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
-    sustainTimes[1] = (Eight - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
-    sustainTimes[2] = (Quarter - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
-    sustainTimes[3] = (Half - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
-    sustainTimes[4] = (Whole - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[1] = (DotSixteenth - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[2] = (Eight - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[3] = (DotEight - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[4] = (Quarter - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[5] = (DotQuarter - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[6] = (Half - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[7] = (DotHalf - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
+    sustainTimes[8] = (Whole - adsrSize * ((PCLKT0 * 1000) / ADSR_Fs)) * adsr.sRatio;
 
     for (int i = 0; i < adsrSize; i++){
         adsrData[i] = 0;
@@ -363,15 +416,39 @@ void changeSustainIdx(int beat){
 	switch (beat){
         case Sixteenth:
             sustainIdx = 0; break;
-        case Eight:
+        case DotSixteenth:
             sustainIdx = 1; break;
-        case Quarter:
+        case Eight:
             sustainIdx = 2; break;
-        case Half:
+        case DotEight:
             sustainIdx = 3; break;
-        case Whole:
+        case Quarter:
             sustainIdx = 4; break;
+        case DotQuarter:
+            sustainIdx = 5; break;
+        case Half:
+            sustainIdx = 6; break;
+        case DotHalf:
+            sustainIdx = 7; break;
+        case Whole:
+            sustainIdx = 8; break;
         default:
             sustainIdx = 0;
     }
+}
+
+void displayNote(int note){
+	if (beats[note] == Quarter){
+		LCDwriteData(QuarterChar);
+	}
+	if (beats[note] == Half){
+		LCDwriteData(HalfChar);
+	}
+	if (beats[note] == Eight){
+		LCDwriteData(EightChar);
+	}
+	int noteInOct = notes[note] % 12;
+	if (noteInOct == 1 || noteInOct == 4 || noteInOct == 6 || noteInOct == 9 || noteInOct == 11){
+		LCDwriteData(FlatChar);
+	}
 }
