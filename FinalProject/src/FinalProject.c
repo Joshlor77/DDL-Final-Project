@@ -99,7 +99,7 @@ void calculateKeys(void);
 void calculateADSR(void);
 void changeSustainIdx(int beat);
 double calculateADSRCurve(double x, double c);
-void displayNote(int noteID);
+int displayNote(int noteID, int charactersDisplayed);
 /////////////////////////////////////////////////////////////////////
 ////////////////////// Global Variables /////////////////////////////
 const int adsrFsCnt = (PCLKT0 * 1000000) / (ADSR_Fs * 1000);
@@ -204,13 +204,15 @@ void TIMER0_IRQHandler(void){
 /////////////////////////////////////////////////////////////////////
 ///////////////////////////// MAIN //////////////////////////////////
 
+float BeatCount;
+int CurrRow = 0;
 int main() {
     initialize();
     int note = 0;
+    BeatCount = 0;
+    int charactersDisplayed = 1;
     while (1) {
     	if (goNextNote){
-
-
     		note++;
     		goNextNote = 0;
     		if (notes[note] == -1){
@@ -222,7 +224,37 @@ int main() {
     		outData.highTime = KeyHighCount[notes[note]];
     		outData.lowTime = KeyLowCount[notes[note]];
         	T0.MR[1] += beats[note];
-        	displayNote(note);
+
+        	if (beats[note] == Quarter){
+        		BeatCount += 1;
+        	}
+        	if (beats[note] == Half){
+        		BeatCount += 2;
+        	}
+        	if (beats[note] == Eight) {
+        		BeatCount += 0.5;
+        	}
+
+        	if (BeatCount >= 12){
+        		if (CurrRow == 0){
+            		LCD_setCursor(1 , 0);
+        		}
+        		if (CurrRow == 1){
+        			LCD_setCursor(0 , 20);
+        		}
+        		if (CurrRow == 2){
+        			LCD_setCursor(1 , 20);
+        		}
+        		if (CurrRow == 3){
+        			LCD_setCursor(0 , 0);
+        		}
+        		CurrRow = (CurrRow + 1) % 4;
+        		BeatCount = 0;
+        		charactersDisplayed = 0;
+        	}
+        	if (charactersDisplayed < 20){
+        		charactersDisplayed += displayNote(note, charactersDisplayed);
+        	}
     	}
     }
 
@@ -259,12 +291,15 @@ void initialize(void){
     calculateADSR();
     adsrIdx = 0;
 
+    LCD_setCursor(0, 0);
+
+
     changeSustainIdx(beats[0]);
     outData.beatTime = beats[0];
     outData.highTime = KeyHighCount[notes[0]];
     outData.lowTime = KeyLowCount[notes[0]];
 	outData.state = 1;
-	displayNote(0);
+	displayNote(0, 0);
 
     //Enable Timer0 Match Register Channel 0
     T0.MR[0] = T0.TC + outData.highTime;
@@ -437,18 +472,24 @@ void changeSustainIdx(int beat){
     }
 }
 
-void displayNote(int note){
+int displayNote(int note, int charactersDisplayed){
+	int charactersSent = 0;
 	if (beats[note] == Quarter){
 		LCDwriteData(QuarterChar);
+		charactersSent++;
 	}
 	if (beats[note] == Half){
 		LCDwriteData(HalfChar);
+		charactersSent++;
 	}
 	if (beats[note] == Eight){
 		LCDwriteData(EightChar);
+		charactersSent++;
 	}
 	int noteInOct = notes[note] % 12;
-	if (noteInOct == 1 || noteInOct == 4 || noteInOct == 6 || noteInOct == 9 || noteInOct == 11){
+	if ((noteInOct == 1 || noteInOct == 4 || noteInOct == 6 || noteInOct == 9 || noteInOct == 11) && (charactersSent + charactersDisplayed) != 20){
 		LCDwriteData(FlatChar);
+		charactersSent++;
 	}
+	return charactersSent;
 }
